@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">FixIT</string>
+    <string name="onboarding_title">The Solutions to your home-service problem!</string>
+    <string name="onboarding_desc">Find a fast and easy cleaning, repair, paint, and equipment service!</string>
+    <string name="get_started">Starts now!</string>
+    <string name="home_title">Service</string>
+    <string name="category_cleaning">Cleaning</string>
+    <string name="category_repair">Repairing</string>
+    <string name="category_painting">Painting</string>
+    <string name="category_service">Equipment service</string>
+    <string name="profile_title">Profile</string>
+    <string name="edit_profile">Edit Profile</string>
+    <string name="settings">Setting</string>
+    <string name="login">Login</string>
+    <string name="register">Register</string>
+    <string name="booking_status">Status</string>
+    <string name="cancel_order">Cancel service</string>
+    <string name="order_history">History</string>
+    <string name="order_detail">Service detail</string>
+    <string name="customer_name">Customer name</string>
+    <string name="phone_number">Phone number</string>
+    <string name="service_description">Service Description</string>
+    <string name="language">Language</string>
+    <string name="cleaning_full">Full House Cleaning</string>
+    <string name="cleaning_outdoor">Outdoor Cleaning</string>
+    <string name="cleaning_room">Room Cleaning</string>
+    <string name="order_cancelled">Order has been cancelled</string>
+    <string name="password">Password</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="save">Save</string>
+    <string name="home_description">Please select the service you want</string>
+
+</resources>

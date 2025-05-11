@@ -1,0 +1,51 @@
+<resources>
+    <!-- Splash & Onboarding -->
+    <string name="app_name">FixIT</string>
+    <string name="onboarding_title">Solusi Servis Rumah Anda!</string>
+    <string name="onboarding_desc">Temukan layanan kebersihan, perbaikan, dan pengecatan dengan cepat dan mudah.</string>
+    <string name="get_started">Mulai Sekarang</string>
+
+    <!-- Home -->
+    <string name="home_title">Beranda</string>
+    <string name="home_description">Silahkan Pilih Jasa yang diinginkan</string>
+    <string name="category_cleaning">Pembersihan</string>
+    <string name="category_repair">Perbaikan</string>
+    <string name="category_painting">Pengecatan</string>
+    <string name="category_service">Servis</string>
+
+    <!-- Profile -->
+    <string name="profile_title">Profil</string>
+    <string name="edit_profile">Edit Profil</string>
+    <string name="settings">Pengaturan</string>
+    <string name="login">Masuk</string>
+    <string name="register">Daftar</string>
+
+    <!-- Booking -->
+    <string name="booking_status">Status</string>
+    <string name="cancel_order">Batalkan</string>
+    <string name="order_history">Riwayat</string>
+
+    <!-- Detail -->
+    <string name="order_detail">Detail Pesanan</string>
+    <string name="customer_name">Nama Pelanggan</string>
+    <string name="phone_number">Nomor Telepon</string>
+    <string name="service_description">Deskripsi Layanan</string>
+
+    <!-- Settings -->
+    <string name="language">Bahasa</string>
+    <string name="save">Simpan</string>
+
+    <!-- Sub Category -->
+    <string name="cleaning_full">Pembersihan Full Rumah</string>
+    <string name="cleaning_outdoor">Pembersihan Halaman</string>
+    <string name="cleaning_room">Pembersihan Ruangan</string>
+
+    <!-- Status Pesanan -->
+    <string name="order_cancelled">Pesanan telah dibatalkan</string>
+
+    <!-- password -->
+    <string name="password">Kata Sandi</string>
+    <string name="confirm_password">Konfirmasi Kata Sandi</string>
+
+
+</resources>
