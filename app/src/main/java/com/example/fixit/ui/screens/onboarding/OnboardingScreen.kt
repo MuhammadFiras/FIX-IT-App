@@ -47,7 +47,7 @@ fun OnboardingContent(onGetStartedClicked: () -> Unit) {
         Spacer(modifier = Modifier.height(50.dp))
 
         // Lottie animation
-        val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.loading_animation))
+        val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.cleaning_animation))
         // Animate the composition infinitely
         val progress by animateLottieCompositionAsState(
             composition,
@@ -65,6 +65,14 @@ fun OnboardingContent(onGetStartedClicked: () -> Unit) {
             color = MaterialTheme.colorScheme.primary,
             style = MaterialTheme.typography.headlineLarge,
             fontSize = 25.sp,
+            modifier = Modifier.align(Alignment.CenterHorizontally)
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = stringResource(id = R.string.onboarding_desc),
+            color = MaterialTheme.colorScheme.primary,
+            style = MaterialTheme.typography.headlineLarge,
+            fontSize = 15.sp,
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
 

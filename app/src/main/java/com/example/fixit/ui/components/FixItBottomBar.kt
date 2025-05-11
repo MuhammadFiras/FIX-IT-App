@@ -17,15 +17,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
 fun FixItBottomBar(navController: NavHostController) {
-    // Get the ViewModel instance
     val bottomBarViewModel: BottomBarViewModel = viewModel()
 
-    // Collect the state of selectedIndex as a state
     val selectedIndex = bottomBarViewModel.selectedIndex.collectAsState().value
 
     NavigationBar(
-        containerColor = Color(0xFFE5FBFF), // Light background color for the bottom bar
-        contentColor = Color(0xFF37C8B2) // Dark text color for the bottom bar
+        containerColor = Color(0xFFE5FBFF),
+        contentColor = Color(0xFF37C8B2)
     ) {
         NavigationBarItem(
             selected = selectedIndex == 0,

@@ -1,8 +1,8 @@
 <resources>
     <!-- Splash & Onboarding -->
     <string name="app_name">FixIT</string>
-    <string name="onboarding_title">Solusi Servis Rumah Anda!</string>
-    <string name="onboarding_desc">Temukan layanan kebersihan, perbaikan, dan pengecatan dengan cepat dan mudah.</string>
+    <string name="onboarding_title">Solusi Servis Rumah Anda! </string>
+    <string name="onboarding_desc">Temukan layanan cepat dan mudah disini.</string>
     <string name="get_started">Mulai Sekarang</string>
 
     <!-- Home -->

@@ -59,7 +59,6 @@ fun HomeScreen(navController: NavHostController) {
                 modifier = Modifier.align(Alignment.Start)
             )
 
-            // Categories Grid (Services)
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
                 modifier = Modifier.fillMaxWidth(),
@@ -71,7 +70,7 @@ fun HomeScreen(navController: NavHostController) {
                     CategoryButton(
                         label = stringResource(R.string.category_cleaning),
                         iconRes = R.drawable.cleaning_icon,
-                        backgroundColor = Color(0xFFFFF2CC), // Light yellow background
+                        backgroundColor = Color(0xFFFFF2CC),
                         onClick = { navController.navigate(Screen.SubCategory.route) }
                     )
                 }
@@ -79,7 +78,7 @@ fun HomeScreen(navController: NavHostController) {
                     CategoryButton(
                         label = stringResource(R.string.category_repair),
                         iconRes = R.drawable.repair_icon,
-                        backgroundColor = Color(0xFFD4F8D2), // Light green background
+                        backgroundColor = Color(0xFFD4F8D2),
                         onClick = { /* TODO */ }
                     )
                 }
@@ -87,7 +86,7 @@ fun HomeScreen(navController: NavHostController) {
                     CategoryButton(
                         label = stringResource(R.string.category_painting),
                         iconRes = R.drawable.paint_icon,
-                        backgroundColor = Color(0xFFD9C3E5), // Light purple background
+                        backgroundColor = Color(0xFFD9C3E5),
                         onClick = { /* TODO */ }
                     )
                 }
@@ -95,7 +94,7 @@ fun HomeScreen(navController: NavHostController) {
                     CategoryButton(
                         label = stringResource(R.string.category_service),
                         iconRes = R.drawable.servis_icon,
-                        backgroundColor = Color(0xFFFFC1D9), // Light pink background
+                        backgroundColor = Color(0xFFFFC1D9),
                         onClick = { /* TODO */ }
                     )
                 }
@@ -128,11 +127,11 @@ fun CategoryButton(label: String, iconRes: Int, backgroundColor: Color, onClick:
                 Image(
                     painter = painterResource(id = iconRes),
                     contentDescription = label,
-                    modifier = Modifier.size(150.dp) // Larger image size
+                    modifier = Modifier.size(150.dp)
                 )
                 Text(
                     text = label,
-                    style = MaterialTheme.typography.bodyLarge.copy(color = Color.Black) // Dark text for visibility
+                    style = MaterialTheme.typography.bodyLarge.copy(color = Color.Black)
                 )
             }
         }
