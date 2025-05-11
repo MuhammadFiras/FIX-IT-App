@@ -68,13 +68,6 @@ fun OnboardingContent(onGetStartedClicked: () -> Unit) {
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
 
-        Text(
-            text = stringResource(id = R.string.onboarding_desc),
-            fontSize = 15.sp,
-            style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.align(Alignment.CenterHorizontally)
-        )
-
         Button(
             onClick = onGetStartedClicked,
             modifier = Modifier
