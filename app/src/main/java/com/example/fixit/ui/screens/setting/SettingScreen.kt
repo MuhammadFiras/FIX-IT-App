@@ -4,7 +4,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -23,12 +22,12 @@ import com.example.fixit.ui.theme.FIXITTheme
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingScreen(navController: NavHostController) {
-    // Track the current selected language and dark mode state
+    // Track the current selected language and dark mode state for latrer
     var selectedLanguage by rememberSaveable { mutableStateOf("id") }
-    var darkMode by rememberSaveable { mutableStateOf(false) } // Initially use the system's theme
-    var isLoggedIn by rememberSaveable { mutableStateOf(true) } // Track login state
+    var darkMode by rememberSaveable { mutableStateOf(false) }
+    var isLoggedIn by rememberSaveable { mutableStateOf(true) }
 
-    // Apply the theme based on the system's dark mode preference (and allow darkMode to be toggled)
+    // PLAN = Apply the theme and language based on what user want (and allow it to be toggled)
     FIXITTheme() {
         Scaffold(
             topBar = {
@@ -96,7 +95,6 @@ fun SettingScreen(navController: NavHostController) {
                     Switch(checked = darkMode, onCheckedChange = { darkMode = it })
                 }
 
-                // Divider to separate Logout section
                 Spacer(modifier = Modifier.height(24.dp))
 
                 // Logout section with click logic

@@ -80,7 +80,7 @@ fun SubCategoryScreen(navController: NavHostController) {
                     iconRes = R.drawable.rumah,
                     onClick = {
                         navController.navigate(
-                            Screen.Detail.passArgs(
+                            Screen.Detail.passArgs( //Just placeholder message as well
                                 name = "John Doe",
                                 phone = "081234567890",
                                 desc = "Pembersihan full rumah 3 kamar dan dapur, mohon dibawa alat pel dan vakum."
@@ -96,7 +96,7 @@ fun SubCategoryScreen(navController: NavHostController) {
                     iconRes = R.drawable.rumah,
                     onClick = {
                         navController.navigate(
-                            Screen.Detail.passArgs(
+                            Screen.Detail.passArgs( //Just placeholder message as well
                                 name = "Jane Smith",
                                 phone = "089876543210",
                                 desc = "Tolong bersihkan halaman belakang dan depan rumah."
@@ -112,7 +112,7 @@ fun SubCategoryScreen(navController: NavHostController) {
                     iconRes = R.drawable.rumah,
                     onClick = {
                         navController.navigate(
-                            Screen.Detail.passArgs(
+                            Screen.Detail.passArgs( //Just placeholder message as well
                                 name = "Michael Jordan",
                                 phone = "085678123456",
                                 desc = "Hanya perlu membersihkan kamar utama dan kamar anak."
