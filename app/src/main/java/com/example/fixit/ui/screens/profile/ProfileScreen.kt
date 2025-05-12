@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -18,17 +19,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.fixit.R
-import com.example.fixit.ui.components.FixItBottomBar
 import com.example.fixit.ui.navigation.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(navController: NavHostController) {
     // Mock login state
-    var isLoggedIn by remember { mutableStateOf(true) }
+    var isLoggedIn by rememberSaveable { mutableStateOf(true) }
 
     Scaffold(
-        bottomBar = { FixItBottomBar(navController) },
         topBar = {
             TopAppBar(
                 title = {
@@ -61,7 +60,7 @@ fun ProfileScreen(navController: NavHostController) {
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.profile_icon), // Replace with your profile picture
+                        painter = painterResource(id = R.drawable.profile_icon),
                         contentDescription = "Profile Picture",
                         modifier = Modifier
                             .size(60.dp)
@@ -73,7 +72,7 @@ fun ProfileScreen(navController: NavHostController) {
 
                     Column {
                         Text(
-                            text = "John Kevin", // Static name, replace with dynamic data
+                            text = "Muhammad Firas", // Static name, replace with dynamic data
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold,
                             fontSize = 20.sp
@@ -88,10 +87,10 @@ fun ProfileScreen(navController: NavHostController) {
 
                     IconButton(
                         onClick = { navController.navigate(Screen.EditProfile.route) },
-                        modifier = Modifier.size(100.dp) // Larger icon button
+                        modifier = Modifier.size(100.dp)
                     ) {
                         Icon(
-                            painter = painterResource(id = R.drawable.edit_logo), // Replace with edit icon
+                            painter = painterResource(id = R.drawable.edit_logo),
                             contentDescription = "Edit Profile",
                             tint = Color(0xFF00B2B2)
                         )
@@ -110,7 +109,7 @@ fun ProfileScreen(navController: NavHostController) {
                         }
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.settings_icon), // Replace with settings icon
+                        painter = painterResource(id = R.drawable.settings_icon),
                         contentDescription = "Settings",
                         modifier = Modifier.size(30.dp),
                         tint = Color.Gray

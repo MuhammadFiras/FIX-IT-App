@@ -1,6 +1,5 @@
-package com.example.fixit.ui.components
+package com.example.fixit
 
-import android.os.Bundle
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow

@@ -1,8 +1,11 @@
 package com.example.fixit.ui.screens.onboarding
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -18,12 +21,12 @@ import com.example.fixit.ui.components.LoadingScreen
 
 @Composable
 fun OnboardingScreen(navController: NavHostController) {
-    var showLoading by remember { mutableStateOf(false) }
+    var showLoading by rememberSaveable { mutableStateOf(false) }
 
     if (showLoading) {
         LoadingScreen()
         LaunchedEffect(Unit) {
-            delay(1500) // simulate loading before navigating to Home
+            delay(2000) // simulate loading before navigating to Home
             navController.navigate(Screen.Home.route) {
                 popUpTo(Screen.Onboarding.route) { inclusive = true }
             }
@@ -40,6 +43,7 @@ fun OnboardingContent(onGetStartedClicked: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
             .padding(32.dp),
         verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.CenterHorizontally
@@ -48,7 +52,7 @@ fun OnboardingContent(onGetStartedClicked: () -> Unit) {
 
         // Lottie animation
         val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.cleaning_animation))
-        // Animate the composition infinitely
+
         val progress by animateLottieCompositionAsState(
             composition,
             iterations = LottieConstants.IterateForever // This makes the animation loop forever

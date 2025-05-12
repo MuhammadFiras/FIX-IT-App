@@ -7,6 +7,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.fixit.ui.screens.splash.SplashScreen
 import com.example.fixit.ui.screens.onboarding.OnboardingScreen
+import com.example.fixit.ui.screens.home.HomeScreen
 import com.example.fixit.ui.screens.subcategory.SubCategoryScreen
 import com.example.fixit.ui.screens.detail.DetailPesananScreen
 import com.example.fixit.ui.screens.login.LoginScreen
@@ -16,11 +17,10 @@ import com.example.fixit.ui.screens.setting.SettingScreen
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.fixit.ui.components.BottomBarViewModel
-import com.example.fixit.ui.screens.home.HomeScreen
-import com.example.fixit.ui.screens.pesanan.PesananScreen
+import com.example.fixit.BottomBarViewModel
+import com.example.fixit.ui.screens.order.PesananScreen
 import com.example.fixit.ui.screens.profile.ProfileScreen
-import com.example.fixit.ui.screens.riwayat.HistoryScreen
+import com.example.fixit.ui.screens.history.HistoryScreen
 
 @Composable
 fun FixItNavGraph(navController: NavHostController, modifier: Modifier) {
@@ -28,10 +28,13 @@ fun FixItNavGraph(navController: NavHostController, modifier: Modifier) {
 
     NavHost(
         navController = navController,
-        startDestination = Screen.Splash.route
+        startDestination = Screen.Home.route // Change this to start with Onboarding or Home, not splash
     ) {
+        // Splash and onboarding screen should be independent and don't show bottom navigation yet
         composable(Screen.Splash.route) { SplashScreen(navController) }
         composable(Screen.Onboarding.route) { OnboardingScreen(navController) }
+
+        // These screens will now show after the onboarding/splash flow
         composable(Screen.Home.route) {
             HomeScreen(navController)
         }

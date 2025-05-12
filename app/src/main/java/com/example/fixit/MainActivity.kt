@@ -3,18 +3,43 @@ package com.example.fixit
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.ui.Modifier
-import com.example.fixit.ui.theme.FIXITTheme
+import androidx.compose.runtime.Composable
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.fixit.ui.navigation.FixItNavGraph
+import com.example.fixit.ui.screens.splash.SplashScreen
+import com.example.fixit.ui.screens.onboarding.OnboardingScreen
+import com.example.fixit.ui.navigation.Screen
+import com.example.fixit.ui.theme.FIXITTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            FIXITTheme {
-                FixItApp()
+            FIXITTheme  {
+                MainNavGraph()
             }
+        }
+    }
+}
+
+@Composable
+fun MainNavGraph() {
+    val navController = rememberNavController()
+
+    // Starting from the splash screen
+    NavHost(
+        navController = navController,
+        startDestination = Screen.Splash.route
+    ) {
+        composable(Screen.Splash.route) {
+            SplashScreen(navController)
+        }
+        composable(Screen.Onboarding.route) {
+            OnboardingScreen(navController)
+        }
+        composable(Screen.Home.route) {
+            FixItApp()
         }
     }
 }

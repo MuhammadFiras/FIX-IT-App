@@ -11,7 +11,7 @@ sealed class Screen(val route: String) {
         }
     }
     object Pesanan : Screen("pesanan")
-    object Riwayat : Screen("riwayat")
+    object Riwayat : Screen("history")
     object Profile : Screen("profile")
     object Login : Screen("login")
     object Register : Screen("register")

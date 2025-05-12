@@ -17,27 +17,29 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.fixit.R
-import com.example.fixit.ui.components.FixItBottomBar
 import com.example.fixit.ui.navigation.Screen
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
 @Composable
 fun HomeScreen(navController: NavHostController) {
     Scaffold(
-        bottomBar = { FixItBottomBar(navController) },
+        modifier = Modifier.background(MaterialTheme.colorScheme.background),
         topBar = { HomeScreenTopBar() }
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(16.dp)
-                .background(Color.White),
+                .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
@@ -53,7 +55,7 @@ fun HomeScreen(navController: NavHostController) {
             Text(
                 text = stringResource(id = R.string.home_description),
                 style = MaterialTheme.typography.bodyLarge.copy(
-                    color = Color.Black,
+                    color = MaterialTheme.colorScheme.onBackground,
                     fontSize = 20.sp
                 ),
                 modifier = Modifier.align(Alignment.Start)
@@ -142,7 +144,8 @@ fun CategoryButton(label: String, iconRes: Int, backgroundColor: Color, onClick:
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreenTopBar() {
-    var searchQuery = TextFieldValue() // We will need to manage this state
+    // Use String instead of TextFieldValue for simple text input
+    var searchQuery by rememberSaveable { mutableStateOf("") }
 
     TopAppBar(
         title = {
@@ -153,17 +156,16 @@ fun HomeScreenTopBar() {
                 Icon(
                     imageVector = Icons.Filled.Search,
                     contentDescription = "Search",
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(30.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 TextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
-                    label = { Text("Search services...") },
                     singleLine = true,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(40.dp)
+                        .height(60.dp)
                 )
             }
         },
@@ -173,3 +175,4 @@ fun HomeScreenTopBar() {
         modifier = Modifier.fillMaxWidth()
     )
 }
+

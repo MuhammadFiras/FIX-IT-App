@@ -1,4 +1,4 @@
-package com.example.fixit.ui.screens.riwayat
+package com.example.fixit.ui.screens.history
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -16,7 +16,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.fixit.R
-import com.example.fixit.ui.components.FixItBottomBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -27,7 +26,6 @@ fun HistoryScreen(navController: NavHostController) {
     )
 
     Scaffold(
-        bottomBar = { FixItBottomBar(navController) },
         topBar = {
             TopAppBar(
                 title = {
@@ -90,15 +88,15 @@ fun HistoryCard(item: HistoryItem) {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.cleaning_icon), // Replace with relevant icon resource
+                    painter = painterResource(id = R.drawable.cleaning_icon),
                     contentDescription = item.title,
-                    modifier = Modifier.height(100.dp)
+                    modifier = Modifier.height(75.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Column {
-                    Text(text = item.title, style = MaterialTheme.typography.bodyLarge,)
+                    Text(text = item.title, style = MaterialTheme.typography.bodyLarge.copy(color = Color.Black))
                     Spacer(modifier = Modifier.height(4.dp))
-                    Text(text = item.date, style = MaterialTheme.typography.bodySmall)
+                    Text(text = item.date, style = MaterialTheme.typography.bodySmall.copy(color = Color.Black))
                 }
             }
 

@@ -46,6 +46,24 @@
     <!-- password -->
     <string name="password">Kata Sandi</string>
     <string name="confirm_password">Konfirmasi Kata Sandi</string>
+    <string name="order_detail_title">Detail Layanan</string>
+    <string name="name">Nama</string>
+    <string name="description">Deskripsi</string>
+    <string name="customer_detail">Detail Pelanggan</string>
+    <string name="order">Pesan</string>
+    <string name="location">Lokasi</string>
+    <string name="search_service">Cari</string>
+    <string name="exit">Keluar</string>
+    <string name="Login">Masuk</string>
+    <string name="Register">Daftar</string>
+    <string name="phone_number_desc">Masukkan nomor handphone anda</string>
+    <string name="password_desc">Masukkan password anda</string>
+    <string name="forget_password">Lupa password?</string>
+    <string name="no_account">Tidak punya akun?</string>
+    <string name="continue_with_google">Lanjut dengan Google</string>
+    <string name="continue_as_guest">Lanjut sebagai tamu</string>
+    <string name="email_desc">Masukkan email anda</string>
+    <string name="confirm_account">Sudah punya akun?</string>
 
 
 </resources>
