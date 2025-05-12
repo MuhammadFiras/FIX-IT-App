@@ -109,7 +109,7 @@ fun DetailPesananScreen(
                     Text(text = stringResource(R.string.customer_detail), fontSize = 18.sp, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Name Field with TextField
+                    // Name Field
                     Text(text = stringResource(R.string.name), fontSize = 14.sp, fontWeight = FontWeight.Normal)
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -131,7 +131,7 @@ fun DetailPesananScreen(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Phone Number Field with TextField
+                    // Phone Number
                     Text(text = stringResource(R.string.phone_number), fontSize = 14.sp, fontWeight = FontWeight.Normal)
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -154,7 +154,7 @@ fun DetailPesananScreen(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Service Description Field with TextField
+                    // Service Description
                     Text(text = stringResource(R.string.service_description), fontSize = 14.sp, fontWeight = FontWeight.Normal)
                     Card(
                         modifier = Modifier.fillMaxWidth(),

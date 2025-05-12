@@ -20,10 +20,13 @@ import com.example.fixit.R
 import com.example.fixit.ui.navigation.Screen
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.font.FontWeight
@@ -33,7 +36,7 @@ import androidx.compose.ui.unit.sp
 fun HomeScreen(navController: NavHostController) {
     Scaffold(
         modifier = Modifier.background(MaterialTheme.colorScheme.background),
-        topBar = { HomeScreenTopBar() }
+        topBar = { FixItSearchBar(modifier = Modifier) }
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -105,6 +108,7 @@ fun HomeScreen(navController: NavHostController) {
     }
 }
 
+// The Multiple Category button
 @Composable
 fun CategoryButton(label: String, iconRes: Int, backgroundColor: Color, onClick: () -> Unit) {
     Card(
@@ -140,39 +144,61 @@ fun CategoryButton(label: String, iconRes: Int, backgroundColor: Color, onClick:
     }
 }
 
-
+// Search Bar
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreenTopBar() {
-    // Use String instead of TextFieldValue for simple text input
-    var searchQuery by rememberSaveable { mutableStateOf("") }
+fun FixItSearchBar (modifier: Modifier) {
+    var text by remember { mutableStateOf("") }
+    var Active by remember { mutableStateOf(false)}
+    var items = remember { mutableListOf(
+        "Pembersihan",
+        "Pengecatan",
+        "Perbaikan",
+        "Servis",
+    ) }
 
-    TopAppBar(
-        title = {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+    SearchBar(
+        query = text,
+        onQueryChange = { text = it },
+        onSearch = { Active = false },
+        active = Active,
+        onActiveChange = { Active = it },
+        modifier = Modifier.fillMaxWidth(),
+        placeholder = {
+            Text(text = stringResource(R.string.search))
+        },
+        leadingIcon = {
+            Icon(
+                imageVector = Icons.Default.Search,
+                contentDescription = null
+            )
+        },
+        trailingIcon = {
+            if (Active) {
                 Icon(
-                    imageVector = Icons.Filled.Search,
-                    contentDescription = "Search",
-                    modifier = Modifier.size(30.dp)
+                    modifier = Modifier.clickable() {
+                        text = ""
+                    },
+                    imageVector = Icons.Default.Close,
+                    contentDescription = null
                 )
-                Spacer(modifier = Modifier.width(8.dp))
-                TextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    singleLine = true,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(60.dp)
-                )
+
             }
-        },
-        actions = {
-            // Add any actions here if needed
-        },
-        modifier = Modifier.fillMaxWidth()
-    )
+        }
+    ) {
+        items.forEach {
+            Row(
+                modifier = Modifier.padding(all = 16.dp)
+            ) {
+                Icon (
+                    modifier = Modifier.padding(end = 10.dp),
+                    imageVector = Icons.Default.History,
+                    contentDescription = null,
+                    tint = Color(0xFF00B2B2)
+                )
+                Text(text = it)
+            }
+        }
+    }
 }
 

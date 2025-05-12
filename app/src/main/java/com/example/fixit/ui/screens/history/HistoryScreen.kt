@@ -102,7 +102,7 @@ fun HistoryCard(item: HistoryItem) {
 
             // Right side: Status Button
             Button(
-                onClick = { /* Handle status click here */ },
+                onClick = { /* Just to show status */ },
                 modifier = Modifier.height(40.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = statusColor),
                 shape = RoundedCornerShape(16.dp)

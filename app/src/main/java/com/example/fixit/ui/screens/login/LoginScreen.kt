@@ -141,7 +141,7 @@ fun LoginScreen(navController: NavHostController) {
                 modifier = Modifier
                     .padding(top = 8.dp)
                     .clickable {
-                        // Handle forgot password action
+                        // Handle forgot password action later
                     },
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color.Gray
@@ -156,7 +156,7 @@ fun LoginScreen(navController: NavHostController) {
             ) {
                 Text(stringResource(R.string.no_account))
                 Text(
-                    text = "Sign Up",
+                    text = stringResource(R.string.register),
                     color = Color.Blue,
                     modifier = Modifier.clickable {
                         // Navigate to the Sign Up screen

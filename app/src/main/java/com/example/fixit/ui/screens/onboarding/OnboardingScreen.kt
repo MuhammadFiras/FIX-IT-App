@@ -10,6 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
@@ -55,7 +56,7 @@ fun OnboardingContent(onGetStartedClicked: () -> Unit) {
 
         val progress by animateLottieCompositionAsState(
             composition,
-            iterations = LottieConstants.IterateForever // This makes the animation loop forever
+            iterations = LottieConstants.IterateForever
         )
         LottieAnimation(
             composition = composition,
@@ -66,17 +67,19 @@ fun OnboardingContent(onGetStartedClicked: () -> Unit) {
 
         Text(
             text = stringResource(id = R.string.onboarding_title),
-            color = MaterialTheme.colorScheme.primary,
+            color = MaterialTheme.colorScheme.onBackground,
             style = MaterialTheme.typography.headlineLarge,
             fontSize = 25.sp,
+            fontWeight = FontWeight.Bold,
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = stringResource(id = R.string.onboarding_desc),
-            color = MaterialTheme.colorScheme.primary,
+            color = MaterialTheme.colorScheme.onBackground,
             style = MaterialTheme.typography.headlineLarge,
             fontSize = 15.sp,
+            fontWeight = FontWeight.Bold,
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
 

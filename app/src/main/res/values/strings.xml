@@ -64,6 +64,7 @@
     <string name="continue_as_guest">Lanjut sebagai tamu</string>
     <string name="email_desc">Masukkan email anda</string>
     <string name="confirm_account">Sudah punya akun?</string>
+    <string name="search">Cari</string>
 
 
 </resources>

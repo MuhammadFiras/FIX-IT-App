@@ -63,9 +63,8 @@ fun ProfileScreen(navController: NavHostController) {
                         painter = painterResource(id = R.drawable.profile_icon),
                         contentDescription = "Profile Picture",
                         modifier = Modifier
-                            .size(60.dp)
+                            .size(75.dp)
                             .clip(CircleShape)
-                            .border(2.dp, Color.Gray, CircleShape)
                     )
 
                     Spacer(modifier = Modifier.width(16.dp))

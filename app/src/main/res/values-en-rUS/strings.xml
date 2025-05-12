@@ -48,5 +48,6 @@
     <string name="continue_as_guest">Continue as Guest</string>
     <string name="email_desc">Enter your email</string>
     <string name="confirm_account">Already have an account?</string>
+    <string name="search">Search</string>
 
 </resources>

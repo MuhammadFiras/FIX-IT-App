@@ -28,13 +28,11 @@ fun FixItNavGraph(navController: NavHostController, modifier: Modifier) {
 
     NavHost(
         navController = navController,
-        startDestination = Screen.Home.route // Change this to start with Onboarding or Home, not splash
+        startDestination = Screen.Home.route
     ) {
-        // Splash and onboarding screen should be independent and don't show bottom navigation yet
         composable(Screen.Splash.route) { SplashScreen(navController) }
         composable(Screen.Onboarding.route) { OnboardingScreen(navController) }
 
-        // These screens will now show after the onboarding/splash flow
         composable(Screen.Home.route) {
             HomeScreen(navController)
         }
