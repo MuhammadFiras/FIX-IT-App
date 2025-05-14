@@ -81,8 +81,8 @@ fun SubCategoryScreen(navController: NavHostController) {
                     onClick = {
                         navController.navigate(
                             Screen.Detail.passArgs( //Just placeholder message as well
-                                name = "John Doe",
-                                phone = "081234567890",
+                                name = "Muhammad Firas",
+                                phone = "081915356535",
                                 desc = "Pembersihan full rumah 3 kamar dan dapur, mohon dibawa alat pel dan vakum."
                             )
                         )
