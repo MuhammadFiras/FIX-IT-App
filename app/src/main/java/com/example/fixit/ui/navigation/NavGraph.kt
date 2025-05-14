@@ -48,7 +48,7 @@ fun FixItNavGraph(navController: NavHostController, modifier: Modifier) {
             val name = backStackEntry.arguments?.getString("name") ?: ""
             val phone = backStackEntry.arguments?.getString("phone") ?: ""
             val desc = backStackEntry.arguments?.getString("desc") ?: ""
-            DetailPesananScreen(name = name, phone = phone, description = desc)
+            DetailPesananScreen(navController, name = name, phone = phone, description = desc)
         }
         composable(Screen.Pesanan.route) { PesananScreen(navController) }
         composable(Screen.Riwayat.route) { HistoryScreen(navController) }

@@ -20,11 +20,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
 import com.example.fixit.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailPesananScreen(
+    navController: NavHostController,
     name: String,
     phone: String,
     description: String
@@ -38,6 +40,14 @@ fun DetailPesananScreen(
     Scaffold(
         topBar = {
             TopAppBar(
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
+                },
                 title = {
                     Box(
                         modifier = Modifier.fillMaxWidth(),
