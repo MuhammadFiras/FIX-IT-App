@@ -66,5 +66,8 @@
     <string name="confirm_account">Sudah punya akun?</string>
     <string name="search">Cari</string>
 
+    <string name="order_success_title">Order Berhasil Dibuat!</string>
+    <string name="order_success_desc">Pesanan layanan Anda telah berhasil dikirim. Teknisi kami akan segera menghubungi Anda.</string>
+    <string name="view_active_orders">Lihat Pesanan Aktif</string>
 
 </resources>

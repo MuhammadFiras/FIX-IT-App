@@ -71,10 +71,10 @@ fun EditProfileScreen(navController: NavHostController) {
                 contentAlignment = Alignment.Center
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.profile_icon),
+                    painter = painterResource(id = R.drawable.right_profile_icon),
                     contentDescription = "Profile Image",
                     modifier = Modifier
-                        .size(200.dp)
+                        .size(100.dp)
                         .clip(CircleShape)
                 )
                 IconButton(
@@ -83,7 +83,7 @@ fun EditProfileScreen(navController: NavHostController) {
                         .align(Alignment.BottomEnd)
                         .size(100.dp)
                 ) {
-                    Icon(painter = painterResource(id = R.drawable.edit_logo), contentDescription = "Edit")
+                    Icon(painter = painterResource(id = R.drawable.pencil), contentDescription = "Edit")
                 }
             }
 

@@ -45,7 +45,7 @@ fun BottomNavigation(
             selected = selectedIndex == 1,
             onClick = {
                 onPageSelected(1)
-                navController.navigate(Screen.Pesanan.route)
+                navController.navigate(Screen.Order.route)
             },
             icon = {
                 Icon(
@@ -62,7 +62,7 @@ fun BottomNavigation(
             selected = selectedIndex == 2,
             onClick = {
                 onPageSelected(2)
-                navController.navigate(Screen.Riwayat.route)
+                navController.navigate(Screen.History.route)
             },
             icon = {
                 Icon(

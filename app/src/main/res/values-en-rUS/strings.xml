@@ -50,4 +50,10 @@
     <string name="confirm_account">Already have an account?</string>
     <string name="search">Search</string>
 
+    <string name="order_success_title">Order Success</string>
+    <string name="order_success_desc">Order have been sent, our techinician will contact you shortly.</string>
+    <string name="view_active_orders">See active order</string>
+
+
+
 </resources>

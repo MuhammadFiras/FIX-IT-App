@@ -28,8 +28,8 @@ fun FixItApp() {
     // Define screens where bottom nav should show
     val bottomNavScreens = listOf(
         Screen.Home.route,
-        Screen.Pesanan.route,
-        Screen.Riwayat.route,
+        Screen.Order.route,
+        Screen.History.route,
         Screen.Profile.route
     )
 

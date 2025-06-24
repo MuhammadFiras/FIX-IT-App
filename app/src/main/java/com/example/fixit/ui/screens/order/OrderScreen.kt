@@ -1,5 +1,7 @@
 package com.example.fixit.ui.screens.order
 
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -10,23 +12,46 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.fixit.R
+import com.example.fixit.app.FixItApplication
+import com.example.fixit.domain.model.ServiceOrder
+import com.example.fixit.ui.viewmodel.OrderViewModel
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.example.fixit.domain.usecase.ServiceOrderUseCases
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Warning // Import icon warning
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PesananScreen(navController: NavHostController) {
-    // Sample orders with different statuses
-    val orders = listOf(
-        Order("Servis Elektronik", "Menunggu Teknisi", "Servis Kulkas LG, ada kerusakan di bagian radiator, dan perlu penggantian", "Jl. Contoh No. 123", "10 Mei 2025, 10:00", 1),
-        Order("Pengecatan Ruangan 10x10", "Survey", "Mengecat ruang 10x10, membutuhkan pengecekan", "Jl. Contoh No. 124", "10 Mei 2025, 14:00", 2),
-        Order("Perbaikan Pintu", "Bekerja", "Perbaikan pintu rusak di lantai 2", "Jl. Contoh No. 125", "11 Mei 2025, 09:00", 3),
-        Order("Pembersihan Rumah", "Selesai", "Pembersihan rumah selesai dilakukan", "Jl. Contoh No. 126", "12 Mei 2025, 12:00", 4)
+fun OrderScreen(navController: NavHostController) {
+    val application = LocalContext.current.applicationContext as FixItApplication
+    val serviceOrderUseCases = application.serviceOrderUseCases
+
+    val orderViewModel: OrderViewModel = viewModel(
+        factory = viewModelFactory {
+            initializer {
+                OrderViewModel(serviceOrderUseCases, application) // Teruskan application
+            }
+        }
     )
+
+    val uiState by orderViewModel.uiState.collectAsState()
+    val context = LocalContext.current
+
+    LaunchedEffect(uiState.errorMessage) {
+        uiState.errorMessage?.let { message ->
+            Toast.makeText(context, "Error: $message", Toast.LENGTH_LONG).show()
+            orderViewModel.updateUiState { it.copy(errorMessage = null) }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -46,27 +71,84 @@ fun PesananScreen(navController: NavHostController) {
             )
         }
     ) { padding ->
-        LazyColumn(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+                .padding(16.dp)
         ) {
-            items(orders) { order ->
-                OrderCard(order = order, navController = navController)
+            if (uiState.isLoading) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+            } else if (uiState.activeOrders.isEmpty()) {
+                Text(
+                    text = "Tidak ada pesanan aktif saat ini.",
+                    modifier = Modifier.fillMaxWidth().wrapContentWidth(Alignment.CenterHorizontally).padding(top = 32.dp),
+                    style = MaterialTheme.typography.bodyLarge.copy(color = Color.Gray)
+                )
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
+                ) {
+                    items(uiState.activeOrders) { order ->
+                        OrderCard(
+                            order = order,
+                            navController = navController,
+                            onUpdateStatus = { updatedOrder, newStatus ->
+                                orderViewModel.updateOrderStatus(updatedOrder, newStatus)
+                            },
+                            onDeleteOrder = { orderToDelete ->
+                                orderViewModel.showDeleteConfirmation(orderToDelete) // Panggil untuk konfirmasi
+                            }
+                        )
+                    }
+                }
             }
         }
+    }
+
+    // Dialog Konfirmasi Hapus
+    if (uiState.showDeleteConfirmation && uiState.orderToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { orderViewModel.hideDeleteConfirmation() },
+            icon = { Icon(Icons.Default.Warning, contentDescription = "Warning") },
+            title = { Text(text = "Konfirmasi Pembatalan") },
+            text = { Text("Apakah Anda yakin ingin membatalkan pesanan '${uiState.orderToDelete?.serviceCategory}'?") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val orderToDelete = uiState.orderToDelete // Dapatkan objek ServiceOrder
+                        val orderIdToDelete = orderToDelete?.id
+                        if (orderIdToDelete != null && orderIdToDelete.isNotEmpty()) {
+                            orderViewModel.deleteOrder(orderIdToDelete)
+                            Log.d("OrderScreen", "Attempting to delete order with ID: $orderIdToDelete. Order details: ${orderToDelete?.serviceCategory}")
+                        } else {
+                            Log.e("OrderScreen", "Cannot delete order: ID is empty or null for order: ${orderToDelete?.serviceCategory}")
+                            Toast.makeText(context, "Gagal membatalkan: ID pesanan tidak ditemukan.", Toast.LENGTH_SHORT).show()
+                        }
+                        orderViewModel.hideDeleteConfirmation() // Tutup dialog setelah aksi
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text("Ya, Batalkan")
+                }
+            }
+        )
     }
 }
 
 @Composable
-fun OrderCard(order: Order, navController: NavHostController) {
-    val statusColor = when (order.OrderStatus) {
-        1 -> Color.Gray
-        2 -> Color.Yellow
-        3 -> Color.Red
-        4 -> Color.Green
+fun OrderCard(
+    order: ServiceOrder,
+    navController: NavHostController,
+    onUpdateStatus: (ServiceOrder, String) -> Unit,
+    onDeleteOrder: (ServiceOrder) -> Unit // Callback baru untuk delete
+) {
+    val statusColor = when (order.status) {
+        "Pending" -> Color.Gray
+        "Survey" -> Color(0xFFE5CC4B)
+        "In Progress" -> Color(0xFFD32F2F)
+        "Completed" -> Color(0xFF388E3C)
         else -> Color.Black
     }
 
@@ -88,14 +170,19 @@ fun OrderCard(order: Order, navController: NavHostController) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(text = order.title, style = MaterialTheme.typography.bodyLarge.copy(color = Color.Black))
+                    Text(text = order.serviceCategory, style = MaterialTheme.typography.bodyLarge.copy(color = Color.Black))
                     Spacer(modifier = Modifier.height(4.dp))
-                    Text(text = "Alamat: ${order.address}", style = MaterialTheme.typography.bodySmall.copy(color = Color.Black))
+                    Text(text = "Alamat: ${order.locationText}", style = MaterialTheme.typography.bodySmall.copy(color = Color.Black))
                     Spacer(modifier = Modifier.height(4.dp))
-                    Text(text = "Waktu: ${order.time}", style = MaterialTheme.typography.bodySmall.copy(color = Color.Black))
+                    val formattedTime = remember(order.timestamp) {
+                        val date = java.util.Date(order.timestamp)
+                        java.text.SimpleDateFormat("dd MMM yyyy, HH:mm", java.util.Locale.getDefault()).format(date)
+                    }
+                    Text(text = "Waktu: $formattedTime", style = MaterialTheme.typography.bodySmall.copy(color = Color.Black))
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(text = "Deskripsi: ${order.serviceDescription}", style = MaterialTheme.typography.bodySmall.copy(color = Color.Black))
                 }
 
-                // Status Badge
                 Box(
                     modifier = Modifier
                         .padding(4.dp)
@@ -105,35 +192,34 @@ fun OrderCard(order: Order, navController: NavHostController) {
                 ) {
                     Text(
                         text = order.status,
-                        style = MaterialTheme.typography.bodyMedium.copy(color = Color.Black)
+                        style = MaterialTheme.typography.bodyMedium.copy(color = Color.White)
                     )
                 }
             }
 
-            // Action Button (Cancel or Update based on status)
             Spacer(modifier = Modifier.height(8.dp))
-            if (order.status == "Menunggu Teknisi" || order.status == "Survey") {
+            if (order.status == "Pending" || order.status == "Survey") {
                 Button(
-                    onClick = { /* Handle Cancel or Change Order Action */ },
+                    onClick = { onDeleteOrder(order) }, // Panggil callback delete
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.error
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(15.dp)
+                        .padding(horizontal = 15.dp)
                         .height(40.dp)
                 ) {
                     Text(text = stringResource(id = R.string.cancel_order))
                 }
-            } else {
+            } else if (order.status == "In Progress") {
                 Button(
-                    onClick = { /* Handle Order Completion */ },
+                    onClick = { onUpdateStatus(order, "Completed") },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF37C8B2)
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(15.dp)
+                        .padding(horizontal = 15.dp)
                         .height(40.dp)
                 ) {
                     Text(text = "Order Complete")
@@ -141,18 +227,4 @@ fun OrderCard(order: Order, navController: NavHostController) {
             }
         }
     }
-}
-
-// Data class for the order and the status
-data class Order(
-    val title: String,
-    val status: String,
-    val description: String,
-    val address: String,
-    val time: String,
-    val OrderStatus: Int
-)
-
-enum class OrderStatus {
-    PENDING, SURVEY, IN_PROGRESS, COMPLETED
 }

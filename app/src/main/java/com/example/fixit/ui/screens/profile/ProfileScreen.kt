@@ -1,7 +1,6 @@
 package com.example.fixit.ui.screens.profile
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -60,10 +59,11 @@ fun ProfileScreen(navController: NavHostController) {
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.profile_icon),
+                        painter = painterResource(id = R.drawable.right_profile_icon),
                         contentDescription = "Profile Picture",
                         modifier = Modifier
-                            .size(75.dp)
+                            .width(75.dp)
+                            .height(75.dp)
                             .clip(CircleShape)
                     )
 
@@ -86,10 +86,10 @@ fun ProfileScreen(navController: NavHostController) {
 
                     IconButton(
                         onClick = { navController.navigate(Screen.EditProfile.route) },
-                        modifier = Modifier.size(100.dp)
+                        modifier = Modifier.size(200.dp)
                     ) {
                         Icon(
-                            painter = painterResource(id = R.drawable.edit_logo),
+                            painter = painterResource(id = R.drawable.pencil),
                             contentDescription = "Edit Profile",
                             tint = Color(0xFF00B2B2)
                         )

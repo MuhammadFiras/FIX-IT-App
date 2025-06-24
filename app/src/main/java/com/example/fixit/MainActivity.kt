@@ -14,6 +14,10 @@ import com.example.fixit.ui.navigation.Screen
 import com.example.fixit.ui.screens.editprofile.EditProfileScreen
 import com.example.fixit.ui.screens.profile.ProfileScreen
 import com.example.fixit.ui.theme.FIXITTheme
+import com.google.firebase.firestore.FirebaseFirestore // Import ini
+import android.util.Log // Import ini
+import com.example.fixit.domain.model.ServiceOrder // Import ini
+import com.google.firebase.firestore.toObject
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "70878091226",
+    "project_id": "fixit-41598",
+    "storage_bucket": "fixit-41598.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:70878091226:android:9d7c25e28ef838ec3452e3",
+        "android_client_info": {
+          "package_name": "com.example.fixit"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDnKNDi_EsCYSMIxOC25xhDgn5wkdBktM8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
