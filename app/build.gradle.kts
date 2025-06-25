@@ -3,8 +3,9 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     id("com.google.gms.google-services")
+    id("com.google.firebase.crashlytics") // For Crashlytics
     id("kotlin-parcelize")
-    id("com.google.devtools.ksp") // Pastikan ini ada
+    id("com.google.devtools.ksp") // For KSP
 }
 
 android {
@@ -40,14 +41,13 @@ android {
     buildFeatures {
         compose = true
     }
-    // Pastikan konfigurasi KSP ada di sini
-    ksp { // <-- TAMBAHKAN/PASTIKAN BLOK INI
+    // KSP configuration for Room schema generation
+    ksp {
         arg("room.schemaLocation", "$projectDir/schemas")
     }
 }
 
 dependencies {
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -72,29 +72,23 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:32.8.1"))
     // Firebase Firestore (untuk database)
     implementation("com.google.firebase:firebase-firestore-ktx")
-    // Firebase Authentication (jika nanti butuh login/register via Firebase)
+    // Firebase Authentication (opsional)
     implementation("com.google.firebase:firebase-auth-ktx")
+    // Firebase Crashlytics
+    implementation("com.google.firebase:firebase-crashlytics-ktx")
+    // Firebase Analytics (direkomendasikan bersama Crashlytics)
+    implementation("com.google.firebase:firebase-analytics-ktx")
 
-    // Google Maps (untuk integrasi Maps) <-- HANYA SATU KALI SAJA
+    // Google Maps
     implementation("com.google.android.gms:play-services-maps:18.2.0")
     implementation("com.google.maps.android:maps-compose:4.3.0")
-
     // Google Places API (untuk pencarian lokasi dan autocomplete)
     implementation("com.google.android.libraries.places:places:3.4.0")
-
-    implementation("com.google.android.gms:play-services-location:21.0.1") // <-- TAMBAHKAN INI
+    // Google Location Services (PENTING UNTUK LocationRequest.Builder dan FusedLocationProviderClient)
+    implementation("com.google.android.gms:play-services-location:21.0.1")
 
     // Room for Local Database
     implementation("androidx.room:room-runtime:2.6.1")
-    ksp("androidx.room:room-compiler:2.6.1") // Ini sudah benar untuk KSP
-    // Kotlin Extensions for Room (Coroutines support)
+    ksp("androidx.room:room-compiler:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
-
-    // Import the BoM for the Firebase platform
-    implementation(platform("com.google.firebase:firebase-bom:33.15.0"))
-
-    // Add the dependencies for the Crashlytics and Analytics libraries
-    // When using the BoM, you don't specify versions in Firebase library dependencies
-    implementation("com.google.firebase:firebase-crashlytics")
-    implementation("com.google.firebase:firebase-analytics")
 }

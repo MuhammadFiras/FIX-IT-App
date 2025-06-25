@@ -10,10 +10,10 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ServiceOrderDao {
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.REPLACE) // REPLACE is crucial for updates
     suspend fun insertOrder(order: ServiceOrderEntity)
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.REPLACE) // REPLACE is crucial for updates
     suspend fun insertAllOrders(orders: List<ServiceOrderEntity>)
 
     @Query("SELECT * FROM service_orders WHERE id = :orderId")
@@ -23,10 +23,10 @@ interface ServiceOrderDao {
     fun getAllOrders(): Flow<List<ServiceOrderEntity>>
 
     @Query("SELECT * FROM service_orders WHERE status != 'Completed' ORDER BY timestamp DESC")
-    fun getActiveOrders(): Flow<List<ServiceOrderEntity>> // Untuk OrderScreen
+    fun getActiveOrders(): Flow<List<ServiceOrderEntity>>
 
     @Query("SELECT * FROM service_orders WHERE status = 'Completed' ORDER BY timestamp DESC")
-    fun getCompletedOrders(): Flow<List<ServiceOrderEntity>> // Untuk HistoryScreen
+    fun getCompletedOrders(): Flow<List<ServiceOrderEntity>>
 
     @Update
     suspend fun updateOrder(order: ServiceOrderEntity)

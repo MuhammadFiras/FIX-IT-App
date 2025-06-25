@@ -10,15 +10,15 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
-import android.util.Log // Pastikan ini ada
-import kotlinx.coroutines.flow.first // Pastikan ini ada jika digunakan
+import android.util.Log
+import kotlinx.coroutines.Job // Import Job
 
 data class OrderUiState(
     val activeOrders: List<ServiceOrder> = emptyList(),
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
-    val showDeleteConfirmation: Boolean = false, // Untuk konfirmasi dialog hapus
-    val orderToDelete: ServiceOrder? = null // Order yang akan dihapus
+    val showDeleteConfirmation: Boolean = false,
+    val orderToDelete: ServiceOrder? = null
 )
 
 class OrderViewModel(
@@ -29,53 +29,37 @@ class OrderViewModel(
     private val _uiState = MutableStateFlow(OrderUiState())
     val uiState: StateFlow<OrderUiState> = _uiState.asStateFlow()
 
+    private var refreshJob: Job? = null // Untuk mengelola job refresh
+
     init {
-        fetchActiveOrders()
-        refreshOrdersFromRemote()
+        fetchActiveOrders() // Ini akan mengobservasi Room, yang sekarang akan memicu sync
+        // HAPUS PANGGILAN triggerRefresh() DARI SINI
+        // triggerRefresh() // <-- HAPUS BARIS INI
     }
 
-    private fun fetchActiveOrders() {
+    // Fungsi triggerRefresh() tidak lagi dibutuhkan di sini karena sudah dipindahkan ke Repository
+    // HAPUS JUGA FUNGSI triggerRefresh() INI DARI OrderViewModel jika tidak ada tempat lain yang menggunakannya.
+    // fun triggerRefresh() { ... }
+
+    private fun fetchActiveOrders() { // Ini tetap mengobservasi Room
         viewModelScope.launch {
+            Log.d("OrderViewModel", "Fetching active orders from Room (fetchActiveOrders)...")
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
-            serviceOrderUseCases.getActiveServiceOrders()
+            serviceOrderUseCases.getActiveServiceOrders() // Ini akan memicu .onEach di Repository
                 .catch { e ->
+                    Log.e("OrderViewModel", "Error collecting active orders from Room UseCase: ${e.message}")
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         errorMessage = e.message ?: "Failed to load active orders"
                     )
-                    Log.e("OrderViewModel", "Error fetching active orders from Room: ${e.message}")
                 }
                 .collect { orders ->
+                    Log.d("OrderViewModel", "UI State updated with ${orders.size} active orders from Room.")
                     _uiState.value = _uiState.value.copy(
                         activeOrders = orders,
                         isLoading = false
                     )
-                    Log.d("OrderViewModel", "UI State updated with ${orders.size} active orders.")
                 }
-        }
-    }
-
-    private fun refreshOrdersFromRemote() {
-        viewModelScope.launch {
-            try {
-                Log.d("OrderViewModel", "Starting remote refresh of all orders...")
-                // serviceOrderUseCases.getServiceOrders()
-                //     .catch { e ->
-                //         Log.e("OrderViewModel", "Error collecting orders from remote for refresh: ${e.message}")
-                //     }
-                //     .collect { allRemoteOrders ->
-                //         serviceOrderUseCases.insertAllOrdersToLocal(allRemoteOrders)
-                //         Log.d("OrderViewModel", "Finished inserting/updating ${allRemoteOrders.size} orders to local DB.")
-                //     }
-                // HACK UNTUK BUG SAAT INI: JIKA COLLECT DI ATAS BERMASALAH, Coba ini:
-                val allRemoteOrders = serviceOrderUseCases.getServiceOrders().first()
-                serviceOrderUseCases.insertAllOrdersToLocal(allRemoteOrders)
-                Log.d("OrderViewModel", "Successfully refreshed cache with ${allRemoteOrders.size} orders from remote.")
-
-            } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(errorMessage = e.message ?: "Failed to refresh orders from remote")
-                Log.e("OrderViewModel", "Outer catch: Error refreshing orders from remote: ${e.message}")
-            }
         }
     }
 
@@ -86,7 +70,11 @@ class OrderViewModel(
             val result = serviceOrderUseCases.updateServiceOrder(updatedOrder)
             _uiState.value = _uiState.value.copy(isLoading = false)
 
-            result.onFailure { e ->
+            result.onSuccess {
+                Log.d("OrderViewModel", "Order ${order.id} status updated to $newStatus successfully.")
+                // Setelah update berhasil, Flow Room akan otomatis memperbarui UI.
+                // Kita juga memicu sync penuh dari RepositoryImpl
+            }.onFailure { e ->
                 _uiState.value = _uiState.value.copy(errorMessage = e.message ?: "Failed to update order status")
                 Log.e("OrderViewModel", "Failed to update order status: ${e.message}")
             }
@@ -95,14 +83,16 @@ class OrderViewModel(
 
     fun deleteOrder(orderId: String) {
         viewModelScope.launch {
-            Log.d("OrderViewModel", "Attempting to delete order with ID: $orderId.") // Tambahkan log ini
+            Log.d("OrderViewModel", "Attempting to delete order with ID: $orderId.")
             _uiState.value = _uiState.value.copy(isLoading = true)
             val result = serviceOrderUseCases.deleteServiceOrder(orderId)
             _uiState.value = _uiState.value.copy(isLoading = false)
 
             result.onSuccess {
                 Log.d("OrderViewModel", "Order $orderId deleted successfully.")
-                _uiState.value = _uiState.value.copy(showDeleteConfirmation = false, orderToDelete = null) // Tutup dialog
+                _uiState.value = _uiState.value.copy(showDeleteConfirmation = false, orderToDelete = null)
+                // Setelah delete berhasil, Flow Room akan otomatis memperbarui UI.
+                // Kita juga memicu sync penuh dari RepositoryImpl
             }.onFailure { e ->
                 _uiState.value = _uiState.value.copy(errorMessage = e.message ?: "Failed to delete order")
                 Log.e("OrderViewModel", "Failed to delete order $orderId: ${e.message}")
@@ -110,12 +100,10 @@ class OrderViewModel(
         }
     }
 
-    // Fungsi untuk menampilkan dialog konfirmasi hapus
     fun showDeleteConfirmation(order: ServiceOrder) {
         _uiState.value = _uiState.value.copy(showDeleteConfirmation = true, orderToDelete = order)
     }
 
-    // Fungsi untuk menyembunyikan dialog konfirmasi hapus
     fun hideDeleteConfirmation() {
         _uiState.value = _uiState.value.copy(showDeleteConfirmation = false, orderToDelete = null)
     }

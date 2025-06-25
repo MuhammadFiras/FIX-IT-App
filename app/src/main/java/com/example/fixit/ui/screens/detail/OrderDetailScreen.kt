@@ -45,7 +45,7 @@ import com.example.fixit.ui.viewmodel.OrderDetailEvent
 import com.example.fixit.ui.viewmodel.OrderDetailViewModel
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
-import com.google.android.gms.location.LocationRequest // <-- Pastikan ini diimpor dan TIDAK ADA IMPORT LocationRequest LAIN
+import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.model.CameraPosition
@@ -65,8 +65,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import java.util.Arrays
 import java.util.Locale
-import androidx.compose.runtime.rememberCoroutineScope // <-- TAMBAHKAN IMPORT INI
-import kotlinx.coroutines.coroutineScope
+import androidx.compose.runtime.rememberCoroutineScope // Import ini
+import android.Manifest.permission.ACCESS_COARSE_LOCATION // <-- TAMBAHKAN IMPORT INI
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -88,7 +88,7 @@ fun OrderDetailScreen(
                 OrderDetailViewModel(
                     serviceOrderUseCases = serviceOrderUseCases,
                     savedStateHandle = createSavedStateHandle(),
-                    application = application // TERUSKAN application
+                    application = application
                 )
             }
         }
@@ -103,16 +103,18 @@ fun OrderDetailScreen(
     val markerState = rememberMarkerState(position = currentLatLng)
 
     // Pindahkan deklarasi scope di sini, di tingkat Composable utama
-    val composableScope = rememberCoroutineScope() // <-- PINDahkan KE SINI
+    val composableScope = rememberCoroutineScope() // Pindahkan ke sini
 
     LaunchedEffect(uiState.latitude, uiState.longitude) {
         val newLatLng = LatLng(uiState.latitude, uiState.longitude)
         if (newLatLng != currentLatLng) {
             currentLatLng = newLatLng
             markerState.position = newLatLng
-            cameraPositionState.animate(
-                com.google.android.gms.maps.CameraUpdateFactory.newLatLngZoom(newLatLng, 15f)
-            )
+            composableScope.launch { // Gunakan composableScope di sini
+                cameraPositionState.animate(
+                    com.google.android.gms.maps.CameraUpdateFactory.newLatLngZoom(newLatLng, 15f)
+                )
+            }
         }
     }
 
@@ -251,7 +253,6 @@ fun OrderDetailScreen(
                             onValueChange = { newValue ->
                                 orderDetailViewModel.updateLocationText(newValue)
                                 if (newValue.isNotEmpty()) {
-                                    // Panggil fungsi helper ini
                                     findAutocompletePredictions(placesClient, newValue, orderDetailViewModel)
                                 } else {
                                     orderDetailViewModel.clearAutocompletePredictions()
@@ -280,7 +281,8 @@ fun OrderDetailScreen(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .clickable {
-                                                composableScope.launch {
+                                                // Gunakan composableScope yang sudah dideklarasikan di atas
+                                                composableScope.launch { // Gunakan composableScope di sini
                                                     fetchPlaceDetails(
                                                         placesClient,
                                                         prediction.placeId,
@@ -343,13 +345,17 @@ fun OrderDetailScreen(
     }
 }
 
+// =====================================================================
+// HELPER FUNCTIONS UNTUK LOKASI DAN PLACES API
+// =====================================================================
+
 private fun startLocationUpdates(
     fusedLocationClient: FusedLocationProviderClient,
     locationCallback: LocationCallback,
     context: Context
 ) {
-    val locationRequest = com.google.android.gms.location.LocationRequest.Builder(
-        com.google.android.gms.location.LocationRequest.PRIORITY_HIGH_ACCURACY,
+    val locationRequest = LocationRequest.Builder(
+        LocationRequest.PRIORITY_HIGH_ACCURACY,
         10000L // durationMillis
     )
         .setWaitForAccurateLocation(true)
@@ -360,7 +366,7 @@ private fun startLocationUpdates(
             Manifest.permission.ACCESS_FINE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(
             context,
-            Manifest.permission.ACCESS_COARSE_LOCATION
+            ACCESS_COARSE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED
     ) {
         fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper())
@@ -400,7 +406,7 @@ private fun getAddressFromLatLng(
     }
 }
 
-private fun findAutocompletePredictions( // <-- TIDAK PERLU suspend, return Flow atau handle callback di sini
+private fun findAutocompletePredictions(
     placesClient: PlacesClient,
     query: String,
     viewModel: OrderDetailViewModel
@@ -444,7 +450,7 @@ private suspend fun fetchPlaceDetails(
 
     } catch (exception: Exception) {
         Log.e("PlacesAPI", "Place details failed: ${exception.message}")
-        Toast.makeText(viewModel.getApplication<Application>().applicationContext, "Gagal mendapatkan detail lokasi.", Toast.LENGTH_SHORT).show() // <-- PASTIKAN getApplication<Application>()
+        Toast.makeText(viewModel.getApplication<Application>().applicationContext, "Gagal mendapatkan detail lokasi.", Toast.LENGTH_SHORT).show()
     }
 }
 

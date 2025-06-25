@@ -1,4 +1,3 @@
-// Di domain/model/ServiceOrder.kt
 package com.example.fixit.domain.model
 
 import android.os.Parcelable
@@ -12,8 +11,8 @@ data class ServiceOrder(
     val serviceCategory: String = "",
     val serviceDescription: String = "",
     val locationText: String = "",
-    val latitude: Double = 0.0, // PASTIKAN ADA INI
-    val longitude: Double = 0.0, // PASTIKAN ADA INI
+    val latitude: Double = 0.0,
+    val longitude: Double = 0.0,
     val status: String = "Pending",
     val timestamp: Long = System.currentTimeMillis()
 ) : Parcelable

@@ -14,10 +14,13 @@ import com.example.fixit.ui.navigation.Screen
 import com.example.fixit.ui.screens.editprofile.EditProfileScreen
 import com.example.fixit.ui.screens.profile.ProfileScreen
 import com.example.fixit.ui.theme.FIXITTheme
-import com.google.firebase.firestore.FirebaseFirestore // Import ini
-import android.util.Log // Import ini
-import com.example.fixit.domain.model.ServiceOrder // Import ini
-import com.google.firebase.firestore.toObject
+// Untuk debugging Crashlytics, hapus setelah verifikasi
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.Column
+import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.fillMaxSize
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

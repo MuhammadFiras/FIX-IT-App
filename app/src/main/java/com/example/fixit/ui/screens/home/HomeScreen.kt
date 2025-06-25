@@ -13,7 +13,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.fixit.R
@@ -76,7 +75,7 @@ fun HomeScreen(navController: NavHostController) {
                         label = stringResource(R.string.category_cleaning),
                         iconRes = R.drawable.cleaning_icon,
                         backgroundColor = Color(0xFFFFF2CC),
-                        onClick = { navController.navigate(Screen.Detail.passArgs("Cleaning")) } // SOLUSI INI
+                        onClick = { navController.navigate(Screen.Detail.passArgs("Cleaning")) }
                     )
                 }
                 item {
@@ -84,7 +83,7 @@ fun HomeScreen(navController: NavHostController) {
                         label = stringResource(R.string.category_repair),
                         iconRes = R.drawable.repair_icon,
                         backgroundColor = Color(0xFFD4F8D2),
-                        onClick = { navController.navigate(Screen.Detail.passArgs("Repair")) } // SOLUSI INI
+                        onClick = { navController.navigate(Screen.Detail.passArgs("Repair")) }
                     )
                 }
                 item {
@@ -92,7 +91,7 @@ fun HomeScreen(navController: NavHostController) {
                         label = stringResource(R.string.category_painting),
                         iconRes = R.drawable.paint_icon,
                         backgroundColor = Color(0xFFD9C3E5),
-                        onClick = { navController.navigate(Screen.Detail.passArgs("Painting")) } // SOLUSI INI
+                        onClick = { navController.navigate(Screen.Detail.passArgs("Painting")) }
                     )
                 }
                 item {
@@ -100,7 +99,7 @@ fun HomeScreen(navController: NavHostController) {
                         label = stringResource(R.string.category_service),
                         iconRes = R.drawable.servis_icon,
                         backgroundColor = Color(0xFFFFC1D9),
-                        onClick = { navController.navigate(Screen.Detail.passArgs("Service")) } // SOLUSI INI
+                        onClick = { navController.navigate(Screen.Detail.passArgs("Service")) }
                     )
                 }
             }
@@ -201,4 +200,3 @@ fun FixItSearchBar (modifier: Modifier) {
         }
     }
 }
-

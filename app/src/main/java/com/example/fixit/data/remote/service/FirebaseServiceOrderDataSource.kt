@@ -7,25 +7,25 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch // Pastikan ini diimpor
+import kotlinx.coroutines.tasks.await // Pastikan ini diimpor
 import android.util.Log // Pastikan ini diimpor
-import kotlinx.coroutines.tasks.await // <-- TAMBAHKAN INI
+// import com.google.firebase.firestore.DocumentChange // Mungkin perlu ini jika ingin proses per jenis perubahan
 
 const val SERVICE_ORDERS_COLLECTION = "service_orders"
 
 class FirebaseServiceOrderDataSource(
     private val firestore: FirebaseFirestore
-) : RemoteDataSource { // Pastikan ini mengimplementasikan RemoteDataSource
+) : RemoteDataSource {
 
     private val serviceOrdersCollection = firestore.collection(SERVICE_ORDERS_COLLECTION)
 
-    // Di FirebaseServiceOrderDataSource.kt
-    override suspend fun createServiceOrder(order: ServiceOrder): Result<ServiceOrder> { // <-- PASTIKAN INI Result<ServiceOrder>
+    override suspend fun createServiceOrder(order: ServiceOrder): Result<ServiceOrder> {
         return try {
             val documentRef = serviceOrdersCollection.document(order.id.ifEmpty { serviceOrdersCollection.document().id })
-            val orderToSave = order.copy(id = documentRef.id) // <-- PASTIKAN ID DITETAPKAN DI SINI
-            documentRef.set(orderToSave).await() // <-- PASTIKAN await() ada dan diimport
+            val orderToSave = order.copy(id = documentRef.id)
+            documentRef.set(orderToSave).await()
             Log.d("FirebaseDataSource", "Order created/updated in Firestore: ${documentRef.id}")
-            Result.success(orderToSave) // <-- PASTIKAN MENGEMBALIKAN orderToSave (dengan ID)
+            Result.success(orderToSave)
         } catch (e: Exception) {
             Log.e("FirebaseDataSource", "Error creating/updating order in Firestore: ${e.message}")
             Result.failure(e)
@@ -33,8 +33,10 @@ class FirebaseServiceOrderDataSource(
     }
 
     override fun getServiceOrders(): Flow<List<ServiceOrder>> = callbackFlow {
+        Log.d("FirebaseDataSource", "getServiceOrders: callbackFlow started. Adding snapshot listener.")
         val listenerRegistration = serviceOrdersCollection
             .addSnapshotListener { snapshot, e ->
+                Log.d("FirebaseDataSource", "addSnapshotListener triggered for all orders.")
                 if (e != null) {
                     Log.e("FirebaseDataSource", "Error listening for orders: ${e.message}")
                     close(e) // Tutup flow jika ada error
@@ -49,29 +51,36 @@ class FirebaseServiceOrderDataSource(
                         }
                         order
                     }
-                    // Log ini yang paling penting
                     Log.d("FirebaseDataSource", "Firestore Snapshot: ${snapshot.documents.size} raw docs, ${serviceOrders.size} converted orders. Attempting to send to Flow.")
-                    // Menggunakan trySend().getOrThrow() untuk melihat jika ada error pengiriman
-                    val sendResult = trySend(serviceOrders)
-                    if (sendResult.isSuccess) {
-                        Log.d("FirebaseDataSource", "Flow sent ${serviceOrders.size} orders successfully.")
-                    } else if (sendResult.isClosed) {
-                        Log.w("FirebaseDataSource", "Flow channel is closed, could not send orders.")
-                    } else if (sendResult.isFailure) {
-                        Log.e("FirebaseDataSource", "Flow send failed: ${sendResult.exceptionOrNull()?.message}")
+
+                    // Kembali ke 'send()' yang suspending, dibungkus launch
+                    // Ini lebih menjamin bahwa setiap emisi akan dikirim,
+                    // menunggu jika channel penuh
+                    launch { // <-- KEMBALI KE LAUNCH{} SEND()
+                        try {
+                            send(serviceOrders)
+                            Log.d("FirebaseDataSource", "Flow sent ${serviceOrders.size} orders successfully.")
+                        } catch (channelException: Exception) {
+                            Log.e("FirebaseDataSource", "Flow send failed: ${channelException.message}")
+                            // Jika channel dibatalkan (misal awaitClose aktif), ini akan terjadi
+                            if (channelException is kotlinx.coroutines.channels.ClosedSendChannelException) {
+                                Log.w("FirebaseDataSource", "Channel closed, cannot send orders.")
+                            }
+                        }
                     }
                 }
             }
-        // Pastikan listener dihapus saat flow tidak lagi diamati
         awaitClose {
-            Log.d("FirebaseDataSource", "Closing Firestore snapshot listener for all orders.")
+            Log.d("FirebaseDataSource", "Closing Firestore snapshot listener for all orders. AwaitClose triggered.")
             listenerRegistration.remove()
         }
     }
 
     override fun getServiceOrderById(orderId: String): Flow<ServiceOrder> = callbackFlow {
+        Log.d("FirebaseDataSource", "getServiceOrderById: callbackFlow started. Adding snapshot listener for ID: $orderId.")
         val listenerRegistration = serviceOrdersCollection.document(orderId)
             .addSnapshotListener { snapshot, e ->
+                Log.d("FirebaseDataSource", "addSnapshotListener triggered for ID: $orderId.")
                 if (e != null) {
                     Log.e("FirebaseDataSource", "Error listening for single order: ${e.message}")
                     close(e)
@@ -81,11 +90,16 @@ class FirebaseServiceOrderDataSource(
                 if (snapshot != null && snapshot.exists()) {
                     snapshot.toObject<ServiceOrder>()?.let { order ->
                         Log.d("FirebaseDataSource", "Fetched single order ${order.id} from Firestore. Attempting to send to Flow.")
-                        val sendResult = trySend(order)
-                        if (sendResult.isSuccess) {
-                            Log.d("FirebaseDataSource", "Successfully sent single order via Flow.")
-                        } else {
-                            Log.e("FirebaseDataSource", "Failed to send single order via Flow: ${sendResult.exceptionOrNull()?.message}")
+                        launch { // <-- KEMBALI KE LAUNCH{} SEND()
+                            try {
+                                send(order)
+                                Log.d("FirebaseDataSource", "Successfully sent single order via Flow.")
+                            } catch (channelException: Exception) {
+                                Log.e("FirebaseDataSource", "Flow send failed: ${channelException.message}")
+                                if (channelException is kotlinx.coroutines.channels.ClosedSendChannelException) {
+                                    Log.w("FirebaseDataSource", "Channel closed, cannot send order.")
+                                }
+                            }
                         }
                     }
                 } else {
@@ -94,7 +108,7 @@ class FirebaseServiceOrderDataSource(
                 }
             }
         awaitClose {
-            Log.d("FirebaseDataSource", "Closing Firestore snapshot listener for single order $orderId.")
+            Log.d("FirebaseDataSource", "Closing Firestore snapshot listener for single order $orderId. AwaitClose triggered.")
             listenerRegistration.remove()
         }
     }

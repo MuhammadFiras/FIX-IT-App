@@ -37,7 +37,6 @@ fun FixItNavGraph(navController: NavHostController, modifier: Modifier) {
             route = Screen.Detail.route,
             arguments = listOf(
                 navArgument("serviceCategory") { type = NavType.StringType }
-                // Hapus argumen lama: navArgument("name"), navArgument("phone"), navArgument("desc")
             )
         ) { backStackEntry ->
             val serviceCategory = backStackEntry.arguments?.getString("serviceCategory") ?: ""

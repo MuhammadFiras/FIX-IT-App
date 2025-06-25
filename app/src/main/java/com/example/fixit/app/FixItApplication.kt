@@ -4,21 +4,24 @@ import android.app.Application
 import android.content.pm.PackageManager
 import android.util.Log
 import com.google.firebase.FirebaseApp
-import com.google.firebase.firestore.FirebaseFirestore // Import ini
-import com.example.fixit.data.remote.service.FirebaseServiceOrderDataSource // Import ini
-import com.example.fixit.data.repository.impl.ServiceOrderRepositoryImpl // Import ini
-import com.example.fixit.domain.repository.ServiceOrderRepository // Import ini
-import com.example.fixit.domain.usecase.* // Import semua use case
-import androidx.room.Room // Import ini
-import com.example.fixit.data.local.database.AppDatabase // Import ini
-import com.example.fixit.data.local.dao.ServiceOrderDao // Import ini
-import com.google.android.libraries.places.api.Places // <-- TAMBAHKAN INI
+import com.google.firebase.firestore.FirebaseFirestore
+import com.example.fixit.data.remote.service.FirebaseServiceOrderDataSource
+import com.example.fixit.data.repository.impl.ServiceOrderRepositoryImpl
+import com.example.fixit.domain.repository.ServiceOrderRepository
+import com.example.fixit.domain.usecase.*
+import androidx.room.Room
+import com.example.fixit.data.local.database.AppDatabase
+import com.example.fixit.data.local.dao.ServiceOrderDao
+import com.google.android.libraries.places.api.Places
+import com.google.firebase.firestore.FirebaseFirestoreSettings // <-- TAMBAHKAN INI
+import com.google.firebase.firestore.MemoryCacheSettings // <-- TAMBAHKAN INI
+import com.google.firebase.firestore.PersistentCacheSettings // <-- TAMBAHKAN INI
 
 class FixItApplication : Application() {
 
     // Variabel untuk menyimpan instance database Room
     lateinit var database: AppDatabase
-        private set // Hanya bisa di-set di dalam kelas ini
+        private set
 
     // Variabel untuk menyimpan instance DAO (Data Access Object)
     lateinit var serviceOrderDao: ServiceOrderDao
@@ -36,20 +39,39 @@ class FixItApplication : Application() {
     lateinit var serviceOrderUseCases: ServiceOrderUseCases
         private set
 
-    companion object { // Tambahkan companion object ini
+    companion object {
         lateinit var instance: FixItApplication
             private set
     }
 
+    lateinit var serviceOrderRepositoryImpl: ServiceOrderRepositoryImpl // <-- TAMBAHKAN INI
+
     override fun onCreate() {
         super.onCreate()
         instance = this
-        // Inisialisasi Firebase
-        FirebaseApp.initializeApp(this)
-        Log.d("FixItApp", "Firebase Initialized in FixItApplication")
+        // Inisialisasi Firebase (jika belum)
+        if (FirebaseApp.getApps(this).isEmpty()) {
+            FirebaseApp.initializeApp(this)
+            Log.d("FixItApp", "FirebaseApp Initialized in FixItApplication")
+        } else {
+            Log.d("FixItApp", "FirebaseApp already initialized.")
+        }
 
-        // Inisialisasi Google Places API <-- TAMBAHKAN BLOK INI
-        // Pastikan API Key Anda ada di AndroidManifest.xml
+        // Inisialisasi Firestore dengan pengaturan kustom untuk memastikan persistensi dan perilaku
+        val firestoreInstance = FirebaseFirestore.getInstance()
+        val settings = FirebaseFirestoreSettings.Builder()
+            // Ganti setCacheSettings dengan setLocalCacheSettings
+            .setLocalCacheSettings(MemoryCacheSettings.newBuilder().build()) // <-- PERBAIKI DI SINI
+            // Atau jika ingin persistensi disk (offline):
+            // .setLocalCacheSettings(PersistentCacheSettings.newBuilder() // <-- JIKA MAU DISK PERSISTENCE
+            //     .setSizeBytes(PersistentCacheSettings.CACHE_SIZE_UNLIMITED)
+            //     .build())
+            .build()
+        firestoreInstance.firestoreSettings = settings
+
+        Log.d("FixItApp", "Firestore instance configured.")
+
+        // Inisialisasi Google Places API
         val apiKey = applicationContext.packageManager.getApplicationInfo(
             applicationContext.packageName,
             PackageManager.GET_META_DATA
@@ -66,14 +88,14 @@ class FixItApplication : Application() {
         database = Room.databaseBuilder(
             applicationContext,
             AppDatabase::class.java,
-            "fixit_database" // Nama database Anda
+            "fixit_database"
         ).build()
 
         // 2. Dapatkan DAO dari database
         serviceOrderDao = database.serviceOrderDao()
 
         // 3. Inisialisasi Data Source Firebase
-        firebaseServiceOrderDataSource = FirebaseServiceOrderDataSource(FirebaseFirestore.getInstance())
+        firebaseServiceOrderDataSource = FirebaseServiceOrderDataSource(firestoreInstance) // <-- GUNAKAN firestoreInstance INI
 
         // 4. Inisialisasi Repository dengan kedua data source
         serviceOrderRepository = ServiceOrderRepositoryImpl(firebaseServiceOrderDataSource, serviceOrderDao)
@@ -85,8 +107,13 @@ class FixItApplication : Application() {
             getServiceOrderById = GetServiceOrderByIdUseCase(serviceOrderRepository),
             updateServiceOrder = UpdateServiceOrderUseCase(serviceOrderRepository),
             deleteServiceOrder = DeleteServiceOrderUseCase(serviceOrderRepository),
-            getActiveServiceOrders = GetActiveServiceOrdersUseCase(serviceOrderRepository), // Tambahkan ini
-                    insertAllOrdersToLocal = InsertAllOrdersToLocalUseCase(serviceOrderRepository) // <-- TAMBAHKAN INI
+            getActiveServiceOrders = GetActiveServiceOrdersUseCase(serviceOrderRepository),
+            insertAllOrdersToLocal = InsertAllOrdersToLocalUseCase(serviceOrderRepository)
         )
+    }
+    override fun onTerminate() { // <-- TAMBAHKAN METODE INI
+        super.onTerminate()
+        // Batalkan scope repository saat aplikasi dimatikan untuk mencegah memory leak
+        serviceOrderRepositoryImpl.cancelScope()
     }
 }

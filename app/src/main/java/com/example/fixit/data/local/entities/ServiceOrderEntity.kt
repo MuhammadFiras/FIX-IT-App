@@ -1,4 +1,3 @@
-// Di data/local/entities/ServiceOrderEntity.kt
 package com.example.fixit.data.local.entities
 
 import androidx.room.Entity
@@ -8,19 +7,19 @@ import com.example.fixit.domain.model.ServiceOrder
 @Entity(tableName = "service_orders")
 data class ServiceOrderEntity(
     @PrimaryKey
-    val id: String,
+    val id: String, // Ensure ID is non-null and correctly used as PK
     val customerName: String,
     val customerPhone: String,
     val serviceCategory: String,
     val serviceDescription: String,
     val locationText: String,
-    val latitude: Double, // PASTIKAN ADA INI
-    val longitude: Double, // PASTIKAN ADA INI
+    val latitude: Double,
+    val longitude: Double,
     val status: String,
     val timestamp: Long
 )
 
-// Mapper functions (PASTIKAN JUGA MEMASUKKAN LATITUDE DAN LONGITUDE DI MAPPER)
+// Mapper functions
 fun ServiceOrderEntity.toDomainModel(): ServiceOrder {
     return ServiceOrder(
         id = this.id,

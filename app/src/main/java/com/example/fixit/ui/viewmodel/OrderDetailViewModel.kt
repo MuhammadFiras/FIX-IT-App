@@ -18,6 +18,9 @@ import android.content.Context // Import ini
 import android.content.ContextWrapper
 import androidx.lifecycle.AndroidViewModel
 import com.example.fixit.app.FixItApplication // Import ini
+import com.google.firebase.Firebase
+import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.analytics.analytics
 
 // State untuk UI OrderDetailScreen
 data class OrderDetailUiState(
@@ -40,6 +43,7 @@ class OrderDetailViewModel(
     application: Application // Ini adalah parameter baru
 ) : AndroidViewModel(application) { // Warisi dari AndroidViewModel
 
+    private val analytics: FirebaseAnalytics = Firebase.analytics // Dapatkan instance Analytics
     private val _uiState = MutableStateFlow(OrderDetailUiState())
     val uiState: StateFlow<OrderDetailUiState> = _uiState.asStateFlow()
 

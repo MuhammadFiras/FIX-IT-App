@@ -18,11 +18,10 @@ data class ServiceOrderUseCases(
 // --- Definisi Use Case Individual ---
 
 class CreateServiceOrderUseCase(private val repository: ServiceOrderRepository) {
-    suspend operator fun invoke(order: ServiceOrder): Result<ServiceOrder> { // <-- PASTIKAN INI Result<ServiceOrder>        // Anda bisa menambahkan validasi bisnis di sini sebelum memanggil repository
+    suspend operator fun invoke(order: ServiceOrder): Result<ServiceOrder> {
         if (order.customerName.isBlank() || order.customerPhone.isBlank() || order.serviceDescription.isBlank()) {
             return Result.failure(IllegalArgumentException("Customer name, phone, and service description cannot be empty."))
         }
-        // Tambahan validasi lain sesuai kebutuhan PRD
         return repository.createServiceOrder(order)
     }
 }
@@ -41,7 +40,6 @@ class GetServiceOrderByIdUseCase(private val repository: ServiceOrderRepository)
 
 class UpdateServiceOrderUseCase(private val repository: ServiceOrderRepository) {
     suspend operator fun invoke(order: ServiceOrder): Result<Unit> {
-        // Validasi atau logika bisnis untuk update bisa ditambahkan di sini
         if (order.id.isBlank()) {
             return Result.failure(IllegalArgumentException("Order ID cannot be empty for update."))
         }
@@ -66,6 +64,6 @@ class GetActiveServiceOrdersUseCase(private val repository: ServiceOrderReposito
 
 class InsertAllOrdersToLocalUseCase(private val repository: ServiceOrderRepository) {
     suspend operator fun invoke(orders: List<ServiceOrder>): Result<Unit> {
-        return repository.insertAllOrdersToLocal(orders) // <-- Akan dibuat di Repository
+        return repository.insertAllOrdersToLocal(orders)
     }
 }

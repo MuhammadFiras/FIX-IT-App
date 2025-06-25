@@ -144,6 +144,8 @@ fun OrderCard(
     onUpdateStatus: (ServiceOrder, String) -> Unit,
     onDeleteOrder: (ServiceOrder) -> Unit // Callback baru untuk delete
 ) {
+    Log.d("OrderCardDebug", "Order ID: ${order.id}, Status received: ${order.status}") // <-- TAMBAHKAN INI
+
     val statusColor = when (order.status) {
         "Pending" -> Color.Gray
         "Survey" -> Color(0xFFE5CC4B)
