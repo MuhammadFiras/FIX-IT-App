@@ -108,7 +108,7 @@ class FixItApplication : Application() {
             updateServiceOrder = UpdateServiceOrderUseCase(serviceOrderRepository),
             deleteServiceOrder = DeleteServiceOrderUseCase(serviceOrderRepository),
             getActiveServiceOrders = GetActiveServiceOrdersUseCase(serviceOrderRepository),
-            insertAllOrdersToLocal = InsertAllOrdersToLocalUseCase(serviceOrderRepository)
+            insertAllOrdersToLocal = InsertAllOrdersToLocalUseCase(serviceOrderRepository),
         )
     }
     override fun onTerminate() { // <-- TAMBAHKAN METODE INI

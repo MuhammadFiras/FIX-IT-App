@@ -8,7 +8,7 @@ import com.example.fixit.domain.model.ServiceOrder
 import com.example.fixit.domain.repository.ServiceOrderRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.first // Pastikan ini diimpor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.catch
@@ -16,24 +16,24 @@ import android.util.Log
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel // Pastikan ini diimpor
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.onEach // <-- Pastikan ini diimpor
 
 class ServiceOrderRepositoryImpl(
     private val remoteDataSource: FirebaseServiceOrderDataSource,
     private val localDataSource: ServiceOrderDao
 ) : ServiceOrderRepository {
 
-    // Buat CoroutineScope untuk repository
-    // SupervisorJob agar kegagalan anak tidak membatalkan yang lain
     private val repositoryScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
     // Fungsi bantu untuk melakukan sinkronisasi penuh dari Firebase ke Room
-    private suspend fun syncAllOrdersFromFirebaseToRoom() {
+    // Ini akan dipanggil setelah setiap operasi tulis (create, update, delete)
+    private suspend fun syncAllOrdersFromFirebaseToRoom() { // <-- Pastikan fungsi ini ada
         withContext(Dispatchers.IO) {
             try {
                 val remoteOrders = remoteDataSource.getServiceOrders().first() // .first() mengambil snapshot pertama dari Flow Firebase
-                localDataSource.deleteAllOrders() // Menghapus semua entitas lama
-                localDataSource.insertAllOrders(remoteOrders.map { it.toEntity() }) // Menyisipkan entitas baru
+                localDataSource.deleteAllOrders() // Hapus semua yang lama di Room
+                localDataSource.insertAllOrders(remoteOrders.map { it.toEntity() }) // Sisipkan semua yang baru
                 Log.d("RepositorySync", "Full sync from Firebase to Room: ${remoteOrders.size} orders.")
             } catch (e: Exception) {
                 Log.e("RepositorySync", "Failed to sync all orders from Firebase to Room: ${e.message}")
@@ -49,7 +49,7 @@ class ServiceOrderRepositoryImpl(
                     try {
                         localDataSource.insertOrder(createdOrder.toEntity())
                         Log.d("CacheCheck", "Order ${createdOrder.id} inserted into local Room DB after Firebase success.")
-                        syncAllOrdersFromFirebaseToRoom() // Panggil sync penuh setelah create
+                        syncAllOrdersFromFirebaseToRoom() // <-- PANGGIL KEMBALI INI
                     } catch (e: Exception) {
                         Log.e("CacheCheck", "Failed to insert order into Room DB after Firebase success: ${e.message}")
                     }
@@ -67,7 +67,7 @@ class ServiceOrderRepositoryImpl(
                     try {
                         localDataSource.updateOrder(order.toEntity())
                         Log.d("Repository", "Order ${order.id} updated in local Room DB successfully to status ${order.status}.")
-                        syncAllOrdersFromFirebaseToRoom() // Panggil sync penuh setelah update
+                        syncAllOrdersFromFirebaseToRoom() // <-- PANGGIL KEMBALI INI
                     } catch (e: Exception) {
                         Log.e("Repository", "Failed to update order ${order.id} in local Room DB: ${e.message}.")
                     }
@@ -84,14 +84,13 @@ class ServiceOrderRepositoryImpl(
                 repositoryScope.launch {
                     localDataSource.deleteOrderById(orderId)
                     Log.d("CacheCheck", "Order $orderId deleted from local Room DB.")
-                    syncAllOrdersFromFirebaseToRoom() // Panggil sync penuh setelah delete
+                    syncAllOrdersFromFirebaseToRoom() // <-- PANGGIL KEMBALI INI
                 }
             }
             result
         }
     }
 
-    // Fungsi getServiceOrders() tanpa .onEach
     override fun getServiceOrders(): Flow<List<ServiceOrder>> {
         return localDataSource.getAllOrders()
             .map { entities ->
@@ -103,7 +102,12 @@ class ServiceOrderRepositoryImpl(
                 Log.e("Repository", "Error from local database flow in getServiceOrders: ${e.message}")
                 emit(emptyList())
             }
-        // HAPUS BLOK .onEach { ... } DI SINI
+            .onEach { // <-- KEMBALIKAN BLOK ON_EACH INI
+                this@ServiceOrderRepositoryImpl.repositoryScope.launch {
+                    Log.d("RepositorySync", "Triggering full sync from Firebase to Room from getServiceOrders.onEach.")
+                    syncAllOrdersFromFirebaseToRoom()
+                }
+            }
     }
 
     override fun getServiceOrderById(orderId: String): Flow<ServiceOrder> {
@@ -115,7 +119,6 @@ class ServiceOrderRepositoryImpl(
             }
     }
 
-    // Fungsi getActiveServiceOrders() tanpa .onEach
     override fun getActiveServiceOrders(): Flow<List<ServiceOrder>> {
         return localDataSource.getActiveOrders()
             .map { entities ->
@@ -127,21 +130,31 @@ class ServiceOrderRepositoryImpl(
                 Log.e("Repository", "Error from local database flow in getActiveOrders: ${e.message}")
                 emit(emptyList())
             }
-        // HAPUS BLOK .onEach { ... } DI SINI
+            .onEach { // <-- KEMBALIKAN BLOK ON_EACH INI
+                this@ServiceOrderRepositoryImpl.repositoryScope.launch {
+                    Log.d("RepositorySync", "Triggering full sync from Firebase to Room from getActiveOrders.onEach.")
+                    syncAllOrdersFromFirebaseToRoom()
+                }
+            }
     }
 
     override suspend fun insertAllOrdersToLocal(orders: List<ServiceOrder>): Result<Unit> {
+        // Ini tidak akan dipanggil lagi secara langsung dari ViewModel untuk sync penuh.
+        // Hanya updateLocalCache yang akan memanggil insertAllOrders.
         return withContext(Dispatchers.IO) {
             try {
                 localDataSource.insertAllOrders(orders.map { it.toEntity() })
-                Log.d("CacheCheck", "Successfully inserted/updated ${orders.size} orders into local Room DB.")
+                Log.d("CacheCheck", "Successfully inserted/updated ${orders.size} orders into local Room DB (from insertAllOrdersToLocal).")
                 Result.success(Unit)
             } catch (e: Exception) {
-                Log.e("CacheCheck", "Failed to insert/update all orders into Room DB: ${e.message}")
+                Log.e("CacheCheck", "Failed to insert/update all orders into Room DB (from insertAllOrdersToLocal): ${e.message}")
                 Result.failure(e)
             }
         }
     }
+
+    // --- HAPUS FUNGSI updateLocalCache INI KARENA TIDAK DIGUNAKAN LAGI DALAM STRATEGI INI ---
+    // override suspend fun updateLocalCache(latestOrders: List<ServiceOrder>): Result<Unit> { ... }
 
     fun cancelScope() {
         repositoryScope.cancel()

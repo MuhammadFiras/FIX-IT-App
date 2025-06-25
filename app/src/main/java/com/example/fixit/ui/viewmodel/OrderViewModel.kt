@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import android.util.Log
 import kotlinx.coroutines.Job // Import Job
+import kotlinx.coroutines.flow.onCompletion // Tambahkan ini jika belum ada
 
 data class OrderUiState(
     val activeOrders: List<ServiceOrder> = emptyList(),
@@ -29,27 +30,56 @@ class OrderViewModel(
     private val _uiState = MutableStateFlow(OrderUiState())
     val uiState: StateFlow<OrderUiState> = _uiState.asStateFlow()
 
-    private var refreshJob: Job? = null // Untuk mengelola job refresh
+    private var refreshJob: Job? = null
 
     init {
-        fetchActiveOrders() // Ini akan mengobservasi Room, yang sekarang akan memicu sync
-        // HAPUS PANGGILAN triggerRefresh() DARI SINI
-        // triggerRefresh() // <-- HAPUS BARIS INI
+        fetchActiveOrders() // Mengobservasi Room
+        // triggerRefresh() // Sudah dihapus dari init, hanya dipanggil manual atau dari LaunchedEffect di screen
     }
 
-    // Fungsi triggerRefresh() tidak lagi dibutuhkan di sini karena sudah dipindahkan ke Repository
-    // HAPUS JUGA FUNGSI triggerRefresh() INI DARI OrderViewModel jika tidak ada tempat lain yang menggunakannya.
-    // fun triggerRefresh() { ... }
+    // Fungsi untuk memicu refresh
+    fun triggerRefresh() {
+        if (refreshJob?.isActive == true) {
+            Log.d("OrderViewModel", "Refresh job already active, skipping trigger.")
+            return // Hindari multiple refreshes
+        }
+        refreshJob = viewModelScope.launch {
+            Log.d("OrderViewModel", "Starting remote refresh of all orders (triggered by user/manual)...")
+            _uiState.value = _uiState.value.copy(isLoading = true) // Tampilkan loading saat refresh manual
+            try {
+                serviceOrderUseCases.getServiceOrders()
+                    .catch { e ->
+                        Log.e("OrderViewModel", "Error collecting orders from remote for refresh: ${e.message}")
+                    }
+                    .onCompletion { cause ->
+                        if (cause == null) {
+                            Log.d("OrderViewModel", "Remote orders Flow completed normally.")
+                        } else {
+                            Log.e("OrderViewModel", "Remote orders Flow terminated with: ${cause.message}")
+                        }
+                    }
+                    .collect { allRemoteOrders ->
+                        serviceOrderUseCases.insertAllOrdersToLocal(allRemoteOrders)
+                        Log.d("OrderViewModel", "Finished inserting/updating ${allRemoteOrders.size} orders to local DB via Flow.")
+                        _uiState.value = _uiState.value.copy(isLoading = false) // Sembunyikan loading
+                    }
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(errorMessage = e.message ?: "Failed to refresh orders from remote")
+                Log.e("OrderViewModel", "Outer catch: Error refreshing orders from remote: ${e.message}")
+                _uiState.value = _uiState.value.copy(isLoading = false) // Sembunyikan loading
+            }
+        }
+    }
 
     private fun fetchActiveOrders() { // Ini tetap mengobservasi Room
         viewModelScope.launch {
             Log.d("OrderViewModel", "Fetching active orders from Room (fetchActiveOrders)...")
-            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
-            serviceOrderUseCases.getActiveServiceOrders() // Ini akan memicu .onEach di Repository
+            // _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null) // Loading handle di triggerRefresh
+            serviceOrderUseCases.getActiveServiceOrders()
                 .catch { e ->
                     Log.e("OrderViewModel", "Error collecting active orders from Room UseCase: ${e.message}")
                     _uiState.value = _uiState.value.copy(
-                        isLoading = false,
+                        isLoading = false, // Sembunyikan loading
                         errorMessage = e.message ?: "Failed to load active orders"
                     )
                 }
@@ -57,7 +87,7 @@ class OrderViewModel(
                     Log.d("OrderViewModel", "UI State updated with ${orders.size} active orders from Room.")
                     _uiState.value = _uiState.value.copy(
                         activeOrders = orders,
-                        isLoading = false
+                        // isLoading = false // Sembunyikan loading
                     )
                 }
         }

@@ -12,7 +12,8 @@ data class ServiceOrderUseCases(
     val updateServiceOrder: UpdateServiceOrderUseCase,
     val deleteServiceOrder: DeleteServiceOrderUseCase,
     val getActiveServiceOrders: GetActiveServiceOrdersUseCase,
-    val insertAllOrdersToLocal: InsertAllOrdersToLocalUseCase
+    val insertAllOrdersToLocal: InsertAllOrdersToLocalUseCase,
+
 )
 
 // --- Definisi Use Case Individual ---
@@ -63,7 +64,7 @@ class GetActiveServiceOrdersUseCase(private val repository: ServiceOrderReposito
 }
 
 class InsertAllOrdersToLocalUseCase(private val repository: ServiceOrderRepository) {
-    suspend operator fun invoke(orders: List<ServiceOrder>): Result<Unit> {
-        return repository.insertAllOrdersToLocal(orders)
+    suspend operator fun invoke(orders: List<ServiceOrder>): Result<Unit> { // <-- UBAH INI
+        return repository.insertAllOrdersToLocal(orders) // Sekarang repository menerima orders
     }
 }

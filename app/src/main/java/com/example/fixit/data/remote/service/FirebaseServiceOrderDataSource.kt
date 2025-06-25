@@ -6,18 +6,69 @@ import com.google.firebase.firestore.toObject
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.launch // Pastikan ini diimpor
-import kotlinx.coroutines.tasks.await // Pastikan ini diimpor
-import android.util.Log // Pastikan ini diimpor
-// import com.google.firebase.firestore.DocumentChange // Mungkin perlu ini jika ingin proses per jenis perubahan
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import android.util.Log
+import com.google.firebase.firestore.DocumentChange // <-- Pastikan ini diimpor
+import kotlinx.coroutines.flow.MutableSharedFlow // Pastikan ini diimpor jika pakai SharedFlow
+import kotlinx.coroutines.flow.SharedFlow // Pastikan ini diimpor jika pakai SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow // Pastikan ini diimpor jika pakai SharedFlow
+import kotlinx.coroutines.CoroutineScope // Pastikan ini diimpor jika pakai SharedFlow
+import kotlinx.coroutines.SupervisorJob // Pastikan ini diimpor jika pakai SharedFlow
+import kotlinx.coroutines.Dispatchers // Pastikan ini diimpor jika pakai SharedFlow
+import kotlinx.coroutines.cancel // Pastikan ini diimpor jika pakai SharedFlow
+import kotlinx.coroutines.channels.BufferOverflow // Pastikan ini diimpor jika pakai SharedFlow
+import kotlinx.coroutines.flow.conflate
 
 const val SERVICE_ORDERS_COLLECTION = "service_orders"
+
+private val firestoreListenerScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
 class FirebaseServiceOrderDataSource(
     private val firestore: FirebaseFirestore
 ) : RemoteDataSource {
 
     private val serviceOrdersCollection = firestore.collection(SERVICE_ORDERS_COLLECTION)
+
+    // SharedFlow yang akan memancarkan daftar order terbaru
+    private val _allServiceOrders = MutableSharedFlow<List<ServiceOrder>>(
+        replay = 1, // Menyimpan 1 emisi terakhir
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
+    val allServiceOrders: SharedFlow<List<ServiceOrder>> = _allServiceOrders.asSharedFlow()
+
+    init {
+        Log.d("FirebaseDataSource", "FirebaseServiceOrderDataSource init. Attaching snapshot listener.")
+        firestoreListenerScope.launch {
+            val listenerRegistration = serviceOrdersCollection
+                .addSnapshotListener { snapshot, e ->
+                    Log.d("FirebaseDataSource", "addSnapshotListener triggered (from init block).")
+                    if (e != null) {
+                        Log.e("FirebaseDataSource", "Error listening for orders (from init block listener): ${e.message}")
+                        return@addSnapshotListener
+                    }
+
+                    if (snapshot != null) {
+                        // Ambil semua dokumen terbaru dari snapshot (ini harusnya selalu daftar lengkap yang terbaru)
+                        val currentOrders = snapshot.documents.mapNotNull { document ->
+                            document.toObject<ServiceOrder>()
+                        }
+
+                        // --- LOG PERUBAHAN INDIVIDUAL ---
+                        for (change in snapshot.documentChanges) {
+                            Log.d("FirebaseDataSource", "DocumentChange Detected: Type=${change.type}, DocId=${change.document.id}, NewStatus=${change.document.getString("status")}")
+                        }
+                        // --- END LOG PERUBAHAN INDIVIDUAL ---
+
+                        Log.d("FirebaseDataSource", "Firestore Snapshot received (from init block): ${snapshot.documents.size} raw docs, ${currentOrders.size} converted orders. Attempting to emit to SharedFlow.")
+                        val result = _allServiceOrders.tryEmit(currentOrders) // Emit seluruh daftar yang terbaru
+                        Log.d("FirebaseDataSource", "SharedFlow emit result: $result (true = success, false = failed).")
+                    }
+                }
+            // Listener ini akan terus berjalan selama firestoreListenerScope aktif
+            // listenerRegistration.remove() akan dipanggil saat scope dibatalkan
+        }
+    }
 
     override suspend fun createServiceOrder(order: ServiceOrder): Result<ServiceOrder> {
         return try {
@@ -32,86 +83,49 @@ class FirebaseServiceOrderDataSource(
         }
     }
 
-    override fun getServiceOrders(): Flow<List<ServiceOrder>> = callbackFlow {
-        Log.d("FirebaseDataSource", "getServiceOrders: callbackFlow started. Adding snapshot listener.")
-        val listenerRegistration = serviceOrdersCollection
-            .addSnapshotListener { snapshot, e ->
-                Log.d("FirebaseDataSource", "addSnapshotListener triggered for all orders.")
-                if (e != null) {
-                    Log.e("FirebaseDataSource", "Error listening for orders: ${e.message}")
-                    close(e) // Tutup flow jika ada error
-                    return@addSnapshotListener
-                }
-
-                if (snapshot != null) {
-                    val serviceOrders = snapshot.documents.mapNotNull { document ->
-                        val order = document.toObject<ServiceOrder>()
-                        if (order == null) {
-                            Log.w("FirebaseDataSource", "Failed to convert document ${document.id} to ServiceOrder (null conversion). Check data types/fields in Firestore matching ServiceOrder.kt.")
-                        }
-                        order
-                    }
-                    Log.d("FirebaseDataSource", "Firestore Snapshot: ${snapshot.documents.size} raw docs, ${serviceOrders.size} converted orders. Attempting to send to Flow.")
-
-                    // Kembali ke 'send()' yang suspending, dibungkus launch
-                    // Ini lebih menjamin bahwa setiap emisi akan dikirim,
-                    // menunggu jika channel penuh
-                    launch { // <-- KEMBALI KE LAUNCH{} SEND()
-                        try {
-                            send(serviceOrders)
-                            Log.d("FirebaseDataSource", "Flow sent ${serviceOrders.size} orders successfully.")
-                        } catch (channelException: Exception) {
-                            Log.e("FirebaseDataSource", "Flow send failed: ${channelException.message}")
-                            // Jika channel dibatalkan (misal awaitClose aktif), ini akan terjadi
-                            if (channelException is kotlinx.coroutines.channels.ClosedSendChannelException) {
-                                Log.w("FirebaseDataSource", "Channel closed, cannot send orders.")
-                            }
-                        }
-                    }
-                }
-            }
-        awaitClose {
-            Log.d("FirebaseDataSource", "Closing Firestore snapshot listener for all orders. AwaitClose triggered.")
-            listenerRegistration.remove()
-        }
+    // Ini adalah fungsi yang paling kita fokuskan sekarang
+    override fun getServiceOrders(): Flow<List<ServiceOrder>> {
+        Log.d("FirebaseDataSource", "getServiceOrders called. Returning SharedFlow.") // Gunakan allServiceOrders jika pakai SharedFlow
+        return allServiceOrders // Ganti dengan allServiceOrders jika pakai SharedFlow
     }
 
     override fun getServiceOrderById(orderId: String): Flow<ServiceOrder> = callbackFlow {
+        // ... (kode yang sama, tambahkan log DocumentChange juga jika mau)
         Log.d("FirebaseDataSource", "getServiceOrderById: callbackFlow started. Adding snapshot listener for ID: $orderId.")
         val listenerRegistration = serviceOrdersCollection.document(orderId)
             .addSnapshotListener { snapshot, e ->
-                Log.d("FirebaseDataSource", "addSnapshotListener triggered for ID: $orderId.")
+                Log.d("FirebaseDataSource", "addSnapshotListener triggered for ID: $orderId (inside callback).")
                 if (e != null) {
-                    Log.e("FirebaseDataSource", "Error listening for single order: ${e.message}")
+                    Log.e("FirebaseDataSource", "Error listening for single order (inside callback): ${e.message}")
                     close(e)
                     return@addSnapshotListener
                 }
-
-                if (snapshot != null && snapshot.exists()) {
+                if (snapshot != null) { // Changed from (snapshot != null && snapshot.exists())
+                    if (snapshot.exists()) {
+                        Log.d("FirebaseDataSource", "Single Doc Snapshot: Id=${snapshot.id}, Status=${snapshot.getString("status")}")
+                    } else {
+                        Log.d("FirebaseDataSource", "Single Doc Snapshot: Id=${snapshot.id}, Document DOES NOT EXIST.")
+                    }
+                    // Tambahkan log DocumentChange di sini juga jika diperlukan
+                    // for (change in snapshot.documentChanges) { Log.d("FirebaseDataSource", "Single Doc Change: Type=${change.type}, DocId=${change.document.id}, Status=${change.document.getString("status")}") }
                     snapshot.toObject<ServiceOrder>()?.let { order ->
                         Log.d("FirebaseDataSource", "Fetched single order ${order.id} from Firestore. Attempting to send to Flow.")
-                        launch { // <-- KEMBALI KE LAUNCH{} SEND()
+                        launch {
                             try {
                                 send(order)
                                 Log.d("FirebaseDataSource", "Successfully sent single order via Flow.")
                             } catch (channelException: Exception) {
-                                Log.e("FirebaseDataSource", "Flow send failed: ${channelException.message}")
+                                Log.e("FirebaseDataSource", "Flow send failed (inside launch): ${channelException.message}")
                                 if (channelException is kotlinx.coroutines.channels.ClosedSendChannelException) {
                                     Log.w("FirebaseDataSource", "Channel closed, cannot send order.")
                                 }
                             }
                         }
                     }
-                } else {
-                    Log.w("FirebaseDataSource", "Order with ID $orderId not found or deleted.")
-                    close(NoSuchElementException("Service order with ID $orderId not found."))
                 }
             }
-        awaitClose {
-            Log.d("FirebaseDataSource", "Closing Firestore snapshot listener for single order $orderId. AwaitClose triggered.")
-            listenerRegistration.remove()
-        }
-    }
+        awaitClose { /* ... */ listenerRegistration.remove() }
+    }.conflate()
 
     override suspend fun updateServiceOrder(order: ServiceOrder): Result<Unit> {
         return try {
@@ -133,5 +147,11 @@ class FirebaseServiceOrderDataSource(
             Log.e("FirebaseDataSource", "Error deleting order from Firestore: ${e.message}")
             Result.failure(e)
         }
+    }
+
+    // Jika Anda menggunakan SharedFlow, ini fungsi cancel listener scopenya
+    fun cancelListenerScope() {
+        firestoreListenerScope.cancel()
+        Log.d("FirebaseDataSource", "Firestore listener scope cancelled from DataSource.")
     }
 }
