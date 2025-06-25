@@ -14,13 +14,18 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
 import com.google.android.libraries.places.api.model.AutocompletePrediction // Import ini
-import android.content.Context // Import ini
+import android.content.Context
 import android.content.ContextWrapper
 import androidx.lifecycle.AndroidViewModel
-import com.example.fixit.app.FixItApplication // Import ini
+import com.example.fixit.app.FixItApplication
 import com.google.firebase.Firebase
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.analytics.analytics
+import android.app.NotificationManager
+import android.util.Log
+import androidx.core.app.NotificationCompat
+import com.example.fixit.R
+import com.example.fixit.util.Constants
 
 // State untuk UI OrderDetailScreen
 data class OrderDetailUiState(
@@ -127,6 +132,7 @@ class OrderDetailViewModel(
                 _uiState.value = _uiState.value.copy(orderSubmissionSuccess = true)
                 _events.send(OrderDetailEvent.NavigateToOrderSuccess)
                 resetForm()
+                showOrderCreatedNotification(createdOrder)
             }.onFailure { e ->
                 _uiState.value = _uiState.value.copy(errorMessage = e.message ?: "Unknown error")
             }
@@ -156,6 +162,25 @@ class OrderDetailViewModel(
                 it.getMethod("getInstance").invoke(null) as? FixItApplication
             }
         } ?: throw IllegalStateException("Application not found")).applicationContext
+    }
+
+    // --- FUNGSI UNTUK MENAMPILKAN NOTIFIKASI ---
+    private fun showOrderCreatedNotification(order: ServiceOrder) {
+        // Dapatkan NotificationManager dari sistem melalui application context
+        val notificationManager = getApplication<Application>().getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        // Bangun notifikasi menggunakan NotificationCompat.Builder (dari AndroidX Core)
+        val notification = NotificationCompat.Builder(getApplication(), Constants.NOTIFICATION_CHANNEL_ID)
+            .setSmallIcon(R.drawable.fixit_logo) // <-- GANTI DENGAN IKON NOTIFIKASI ANDA (di res/drawable)
+            .setContentTitle("Order Baru Dibuat!") // Judul notifikasi
+            .setContentText("Pesanan '${order.serviceCategory}' Anda (ID: ${order.id.take(8)}...) telah berhasil dibuat.") // Isi notifikasi
+            .setPriority(NotificationCompat.PRIORITY_HIGH) // Prioritas notifikasi (HIGH akan membuat pop-up)
+            .setAutoCancel(true) // Notifikasi akan otomatis hilang saat pengguna mengkliknya
+            .build()
+
+        // Tampilkan notifikasi
+        notificationManager.notify(Constants.NOTIFICATION_ID, notification)
+        Log.d("Notification", "Order Created Notification shown for ID: ${order.id}.")
     }
 }
 

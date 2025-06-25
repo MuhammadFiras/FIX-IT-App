@@ -16,6 +16,11 @@ import com.google.android.libraries.places.api.Places
 import com.google.firebase.firestore.FirebaseFirestoreSettings // <-- TAMBAHKAN INI
 import com.google.firebase.firestore.MemoryCacheSettings // <-- TAMBAHKAN INI
 import com.google.firebase.firestore.PersistentCacheSettings // <-- TAMBAHKAN INI
+import android.app.NotificationChannel // <-- TAMBAHKAN INI
+import android.app.NotificationManager // <-- TAMBAHKAN INI
+import android.content.Context // <-- TAMBAHKAN INI
+import android.os.Build // <-- TAMBAHKAN INI
+import com.example.fixit.util.Constants // <-- TAMBAHKAN INI (Pastikan ini mengarah ke file Constants.kt Anda)
 
 class FixItApplication : Application() {
 
@@ -60,12 +65,7 @@ class FixItApplication : Application() {
         // Inisialisasi Firestore dengan pengaturan kustom untuk memastikan persistensi dan perilaku
         val firestoreInstance = FirebaseFirestore.getInstance()
         val settings = FirebaseFirestoreSettings.Builder()
-            // Ganti setCacheSettings dengan setLocalCacheSettings
             .setLocalCacheSettings(MemoryCacheSettings.newBuilder().build()) // <-- PERBAIKI DI SINI
-            // Atau jika ingin persistensi disk (offline):
-            // .setLocalCacheSettings(PersistentCacheSettings.newBuilder() // <-- JIKA MAU DISK PERSISTENCE
-            //     .setSizeBytes(PersistentCacheSettings.CACHE_SIZE_UNLIMITED)
-            //     .build())
             .build()
         firestoreInstance.firestoreSettings = settings
 
@@ -83,6 +83,8 @@ class FixItApplication : Application() {
         } else {
             Log.e("FixItApp", "Google Places API Key not found or Places already initialized.")
         }
+
+        createNotificationChannel()
 
         // 1. Inisialisasi Room Database
         database = Room.databaseBuilder(
@@ -115,5 +117,30 @@ class FixItApplication : Application() {
         super.onTerminate()
         // Batalkan scope repository saat aplikasi dimatikan untuk mencegah memory leak
         serviceOrderRepositoryImpl.cancelScope()
+    }
+
+    private fun createNotificationChannel() {
+        // Periksa versi Android. Notification Channel hanya diperlukan untuk Android 8.0 (Oreo) ke atas.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // Ambil nama dan ID channel dari file Constants yang sudah kita buat
+            val name = Constants.NOTIFICATION_CHANNEL_NAME // "FixIT Order Updates"
+            val descriptionText = "Notifikasi untuk update status pesanan FixIT." // Deskripsi yang akan terlihat di pengaturan notifikasi
+            val importance = NotificationManager.IMPORTANCE_HIGH // Tingkat pentingnya notifikasi. HIGH berarti notifikasi akan muncul di atas (pop-up).
+
+            // Buat objek NotificationChannel
+            val channel = NotificationChannel(Constants.NOTIFICATION_CHANNEL_ID, name, importance).apply {
+                description = descriptionText // Set deskripsi channel
+            }
+
+            // Dapatkan NotificationManager dari sistem
+            val notificationManager: NotificationManager =
+                getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+            // Daftarkan channel ini dengan sistem Android
+            notificationManager.createNotificationChannel(channel)
+
+            // Log untuk memastikan channel berhasil dibuat (akan terlihat di Logcat)
+            Log.d("FixItApp", "Notification Channel created.")
+        }
     }
 }
