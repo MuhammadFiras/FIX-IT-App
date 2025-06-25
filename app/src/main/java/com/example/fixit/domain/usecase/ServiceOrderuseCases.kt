@@ -13,6 +13,7 @@ data class ServiceOrderUseCases(
     val deleteServiceOrder: DeleteServiceOrderUseCase,
     val getActiveServiceOrders: GetActiveServiceOrdersUseCase,
     val insertAllOrdersToLocal: InsertAllOrdersToLocalUseCase,
+    val getCompletedServiceOrders: GetCompletedServiceOrdersUseCase // Pastikan ini ada
 
 )
 
@@ -66,5 +67,11 @@ class GetActiveServiceOrdersUseCase(private val repository: ServiceOrderReposito
 class InsertAllOrdersToLocalUseCase(private val repository: ServiceOrderRepository) {
     suspend operator fun invoke(orders: List<ServiceOrder>): Result<Unit> { // <-- UBAH INI
         return repository.insertAllOrdersToLocal(orders) // Sekarang repository menerima orders
+    }
+}
+
+class GetCompletedServiceOrdersUseCase(private val repository: ServiceOrderRepository) {
+    operator fun invoke(): Flow<List<ServiceOrder>> {
+        return repository.getCompletedServiceOrders()
     }
 }

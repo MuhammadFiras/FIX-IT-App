@@ -1,29 +1,62 @@
 package com.example.fixit.ui.screens.history
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items // Import ini
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.fixit.R
+import com.example.fixit.app.FixItApplication
+import com.example.fixit.domain.model.ServiceOrder
+import com.example.fixit.ui.viewmodel.HistoryViewModel
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.example.fixit.domain.usecase.ServiceOrderUseCases
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import androidx.compose.runtime.getValue
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HistoryScreen(navController: NavHostController) {
-    val mockHistory = listOf(
-        HistoryItem("Pembersihan Full Rumah", "Selesai", "10 Mei 2025, 10:00"),
-        HistoryItem("Pengecatan Ruangan", "Dibatalkan", "8 Mei 2025, 13:00")
+    val application = LocalContext.current.applicationContext as FixItApplication
+    val serviceOrderUseCases = application.serviceOrderUseCases
+
+    val historyViewModel: HistoryViewModel = viewModel(
+        factory = viewModelFactory {
+            initializer {
+                HistoryViewModel(serviceOrderUseCases, application)
+            }
+        }
     )
+
+    val uiState by historyViewModel.uiState.collectAsState()
+    val context = LocalContext.current
+
+    LaunchedEffect(uiState.errorMessage) {
+        uiState.errorMessage?.let { message ->
+            Toast.makeText(context, "Error: $message", Toast.LENGTH_LONG).show()
+            historyViewModel.updateUiState { it.copy(errorMessage = null) }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -43,33 +76,42 @@ fun HistoryScreen(navController: NavHostController) {
             )
         }
     ) { padding ->
-        LazyColumn(
-            contentPadding = padding,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+        Column(
             modifier = Modifier
                 .fillMaxSize()
+                .padding(padding)
                 .padding(16.dp)
         ) {
-            items(mockHistory.size) { index ->
-                val item = mockHistory[index]
-                HistoryCard(item)
+            if (uiState.isLoading) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+            } else if (uiState.completedOrders.isEmpty()) {
+                Text(
+                    text = "Tidak ada riwayat pesanan selesai.",
+                    modifier = Modifier.fillMaxWidth().wrapContentWidth(Alignment.CenterHorizontally).padding(top = 32.dp),
+                    style = MaterialTheme.typography.bodyLarge.copy(color = Color.Gray)
+                )
+            } else {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    items(uiState.completedOrders, key = { it.id }) { item -> // Gunakan items dari ServiceOrder dan tambahkan key
+                        HistoryCard(item)
+                    }
+                }
             }
         }
     }
 }
 
-data class HistoryItem(val title: String, val status: String, val date: String)
-
 @Composable
-fun HistoryCard(item: HistoryItem) {
-    // Set the color based on the item status
-    val statusColor = when (item.status) {
-        "Selesai" -> Color.Green
-        "Dibatalkan" -> Color.Red
-        else -> Color.Gray
+fun HistoryCard(order: ServiceOrder) { // Menerima ServiceOrder
+    val statusColor = when (order.status) {
+        "Completed" -> Color(0xFF388E3C) // Greenish
+        "Cancelled" -> Color.Red // Merah jika dibatalkan (jika ada status ini)
+        else -> Color.Gray // Status lain yang tidak terduga
     }
 
-    // The main Card that holds the content
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
@@ -83,32 +125,35 @@ fun HistoryCard(item: HistoryItem) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            // Left side: Icon/Image and Title
             Row(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
+                // Anda bisa menyesuaikan ikon berdasarkan serviceCategory jika mau
                 Image(
-                    painter = painterResource(id = R.drawable.cleaning_icon),
-                    contentDescription = item.title,
+                    painter = painterResource(id = R.drawable.cleaning_icon), // Placeholder, sesuaikan dengan ikon kategori asli
+                    contentDescription = order.serviceCategory,
                     modifier = Modifier.height(75.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Column {
-                    Text(text = item.title, style = MaterialTheme.typography.bodyLarge.copy(color = Color.Black))
+                    Text(text = order.serviceCategory, style = MaterialTheme.typography.bodyLarge.copy(color = Color.Black))
                     Spacer(modifier = Modifier.height(4.dp))
-                    Text(text = item.date, style = MaterialTheme.typography.bodySmall.copy(color = Color.Black))
+                    val formattedTime = remember(order.timestamp) {
+                        val date = Date(order.timestamp)
+                        SimpleDateFormat("dd MMM.yyyy, HH:mm", Locale.getDefault()).format(date) // Format tanggal
+                    }
+                    Text(text = formattedTime, style = MaterialTheme.typography.bodySmall.copy(color = Color.Black))
                 }
             }
 
-            // Right side: Status Button
             Button(
-                onClick = { /* Just to show status */ },
+                onClick = { /* Riwayat biasanya tidak bisa diklik untuk aksi */ },
                 modifier = Modifier.height(40.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = statusColor),
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Text(
-                    text = item.status,
+                    text = order.status,
                     color = Color.White,
                     style = MaterialTheme.typography.bodyMedium
                 )

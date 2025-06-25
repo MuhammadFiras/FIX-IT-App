@@ -32,7 +32,6 @@ class ServiceOrderRepositoryImpl(
         withContext(Dispatchers.IO) {
             try {
                 val remoteOrders = remoteDataSource.getServiceOrders().first() // .first() mengambil snapshot pertama dari Flow Firebase
-                localDataSource.deleteAllOrders() // Hapus semua yang lama di Room
                 localDataSource.insertAllOrders(remoteOrders.map { it.toEntity() }) // Sisipkan semua yang baru
                 Log.d("RepositorySync", "Full sync from Firebase to Room: ${remoteOrders.size} orders.")
             } catch (e: Exception) {
@@ -84,6 +83,7 @@ class ServiceOrderRepositoryImpl(
                 repositoryScope.launch {
                     localDataSource.deleteOrderById(orderId)
                     Log.d("CacheCheck", "Order $orderId deleted from local Room DB.")
+                    localDataSource.deleteAllOrders() // Hapus semua yang lama di Room
                     syncAllOrdersFromFirebaseToRoom() // <-- PANGGIL KEMBALI INI
                 }
             }
@@ -159,5 +159,15 @@ class ServiceOrderRepositoryImpl(
     fun cancelScope() {
         repositoryScope.cancel()
         Log.d("RepositorySync", "Repository scope cancelled.")
+    }
+
+    // Di data/repository/impl/ServiceOrderRepositoryImpl.kt
+    override fun getCompletedServiceOrders(): Flow<List<ServiceOrder>> {
+        return localDataSource.getCompletedOrders() // Memanggil DAO Room
+            .map { entities -> entities.map { it.toDomainModel() } }
+            .catch { e ->
+                Log.e("Repository", "Error from local DB flow in getCompletedServiceOrders: ${e.message}")
+                emit(emptyList())
+            }
     }
 }

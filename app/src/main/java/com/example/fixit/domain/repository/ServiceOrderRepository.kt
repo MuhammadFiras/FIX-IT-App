@@ -11,5 +11,5 @@ interface ServiceOrderRepository {
     suspend fun deleteServiceOrder(orderId: String): Result<Unit>
     fun getActiveServiceOrders(): Flow<List<ServiceOrder>>
     suspend fun insertAllOrdersToLocal(orders: List<ServiceOrder>): Result<Unit>
-
+    fun getCompletedServiceOrders(): Flow<List<ServiceOrder>> // Pastikan ini ada
 }

@@ -97,7 +97,7 @@ class FixItApplication : Application() {
         serviceOrderDao = database.serviceOrderDao()
 
         // 3. Inisialisasi Data Source Firebase
-        firebaseServiceOrderDataSource = FirebaseServiceOrderDataSource(firestoreInstance) // <-- GUNAKAN firestoreInstance INI
+        firebaseServiceOrderDataSource = FirebaseServiceOrderDataSource(firestoreInstance)
 
         // 4. Inisialisasi Repository dengan kedua data source
         serviceOrderRepository = ServiceOrderRepositoryImpl(firebaseServiceOrderDataSource, serviceOrderDao)
@@ -111,6 +111,7 @@ class FixItApplication : Application() {
             deleteServiceOrder = DeleteServiceOrderUseCase(serviceOrderRepository),
             getActiveServiceOrders = GetActiveServiceOrdersUseCase(serviceOrderRepository),
             insertAllOrdersToLocal = InsertAllOrdersToLocalUseCase(serviceOrderRepository),
+            getCompletedServiceOrders = GetCompletedServiceOrdersUseCase(serviceOrderRepository)
         )
     }
     override fun onTerminate() { // <-- TAMBAHKAN METODE INI
