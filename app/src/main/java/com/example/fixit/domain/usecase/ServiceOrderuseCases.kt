@@ -13,8 +13,8 @@ data class ServiceOrderUseCases(
     val deleteServiceOrder: DeleteServiceOrderUseCase,
     val getActiveServiceOrders: GetActiveServiceOrdersUseCase,
     val insertAllOrdersToLocal: InsertAllOrdersToLocalUseCase,
-    val getCompletedServiceOrders: GetCompletedServiceOrdersUseCase // Pastikan ini ada
-
+    val getCompletedServiceOrders: GetCompletedServiceOrdersUseCase,
+    val syncAllOrdersFromFirebaseToRoom: SyncAllOrdersFromFirebaseToRoomUseCase // Pastikan ini ada dan namanya persis
 )
 
 // --- Definisi Use Case Individual ---
@@ -65,13 +65,21 @@ class GetActiveServiceOrdersUseCase(private val repository: ServiceOrderReposito
 }
 
 class InsertAllOrdersToLocalUseCase(private val repository: ServiceOrderRepository) {
-    suspend operator fun invoke(orders: List<ServiceOrder>): Result<Unit> { // <-- UBAH INI
-        return repository.insertAllOrdersToLocal(orders) // Sekarang repository menerima orders
+    suspend operator fun invoke(orders: List<ServiceOrder>): Result<Unit> {
+        return repository.insertAllOrdersToLocal(orders)
     }
 }
 
 class GetCompletedServiceOrdersUseCase(private val repository: ServiceOrderRepository) {
     operator fun invoke(): Flow<List<ServiceOrder>> {
         return repository.getCompletedServiceOrders()
+    }
+}
+
+// DEFINISI KELAS USE CASE UNTUK SINKRONISASI PENUH
+// PASTIKAN INI ADA DI FILE INI
+class SyncAllOrdersFromFirebaseToRoomUseCase(private val repository: ServiceOrderRepository) {
+    suspend operator fun invoke(): Result<Unit> {
+        return repository.syncAllOrdersFromFirebaseToRoom()
     }
 }

@@ -12,4 +12,5 @@ interface ServiceOrderRepository {
     fun getActiveServiceOrders(): Flow<List<ServiceOrder>>
     suspend fun insertAllOrdersToLocal(orders: List<ServiceOrder>): Result<Unit>
     fun getCompletedServiceOrders(): Flow<List<ServiceOrder>> // Pastikan ini ada
+    suspend fun syncAllOrdersFromFirebaseToRoom(): Result<Unit>
 }

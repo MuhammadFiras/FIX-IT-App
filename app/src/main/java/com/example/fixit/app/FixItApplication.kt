@@ -13,14 +13,19 @@ import androidx.room.Room
 import com.example.fixit.data.local.database.AppDatabase
 import com.example.fixit.data.local.dao.ServiceOrderDao
 import com.google.android.libraries.places.api.Places
-import com.google.firebase.firestore.FirebaseFirestoreSettings // <-- TAMBAHKAN INI
-import com.google.firebase.firestore.MemoryCacheSettings // <-- TAMBAHKAN INI
-import com.google.firebase.firestore.PersistentCacheSettings // <-- TAMBAHKAN INI
-import android.app.NotificationChannel // <-- TAMBAHKAN INI
-import android.app.NotificationManager // <-- TAMBAHKAN INI
-import android.content.Context // <-- TAMBAHKAN INI
-import android.os.Build // <-- TAMBAHKAN INI
-import com.example.fixit.util.Constants // <-- TAMBAHKAN INI (Pastikan ini mengarah ke file Constants.kt Anda)
+import com.google.firebase.firestore.FirebaseFirestoreSettings
+import com.google.firebase.firestore.MemoryCacheSettings
+import com.google.firebase.firestore.PersistentCacheSettings
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
+import android.os.Build
+import com.example.fixit.util.Constants
+import androidx.work.ExistingPeriodicWorkPolicy // <-- TAMBAHKAN INI
+import androidx.work.PeriodicWorkRequestBuilder // <-- TAMBAHKAN INI
+import androidx.work.WorkManager // <-- TAMBAHKAN INI
+import java.util.concurrent.TimeUnit // <-- TAMBAHKAN INI
+import com.example.fixit.worker.SyncWorker // <-- TAMBAHKAN INI (Pastikan ini mengarah ke file SyncWorker.kt Anda)
 
 class FixItApplication : Application() {
 
@@ -111,8 +116,12 @@ class FixItApplication : Application() {
             deleteServiceOrder = DeleteServiceOrderUseCase(serviceOrderRepository),
             getActiveServiceOrders = GetActiveServiceOrdersUseCase(serviceOrderRepository),
             insertAllOrdersToLocal = InsertAllOrdersToLocalUseCase(serviceOrderRepository),
-            getCompletedServiceOrders = GetCompletedServiceOrdersUseCase(serviceOrderRepository)
+            getCompletedServiceOrders = GetCompletedServiceOrdersUseCase(serviceOrderRepository),
+            syncAllOrdersFromFirebaseToRoom = SyncAllOrdersFromFirebaseToRoomUseCase(serviceOrderRepository) // <-- PASTIKAN INI ADA
         )
+
+        // 6. Background Task
+        schedulePeriodicSyncWork()
     }
     override fun onTerminate() { // <-- TAMBAHKAN METODE INI
         super.onTerminate()
@@ -143,5 +152,32 @@ class FixItApplication : Application() {
             // Log untuk memastikan channel berhasil dibuat (akan terlihat di Logcat)
             Log.d("FixItApp", "Notification Channel created.")
         }
+    }
+
+    private fun schedulePeriodicSyncWork() {
+        // Definisikan request untuk PeriodicWork
+        val syncWorkRequest = PeriodicWorkRequestBuilder<SyncWorker>(
+            2, TimeUnit.MINUTES // Ulangi setiap 15 menit (untuk demo/pengujian)
+            // Di produksi, Anda mungkin ingin ini lebih lama, misalnya:
+            // 24, TimeUnit.HOURS // Setiap 24 jam
+        )
+            // Anda bisa menambahkan Constraints (kondisi kapan tugas bisa berjalan) di sini, contoh:
+            // .setConstraints(Constraints.Builder()
+            //     .setRequiredNetworkType(NetworkType.CONNECTED) // Hanya jika ada koneksi jaringan
+            //     .setRequiresBatteryNotLow(true) // Hanya jika baterai tidak lemah
+            //     .build())
+            .build() // Bangun objek work request
+
+        // Dapatkan instance WorkManager dan antrekan tugas unik
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            "FixIT_Periodic_Sync_Work", // Nama unik untuk tugas ini. Pastikan ini unik di seluruh aplikasi Anda.
+            // Jika tugas dengan nama ini sudah ada, KEEP berarti pertahankan yang sudah ada.
+            // REPLACE berarti batalkan yang lama dan antrekan yang baru.
+            ExistingPeriodicWorkPolicy.KEEP,
+            syncWorkRequest
+        )
+
+        // Log untuk memastikan tugas berhasil dijadwalkan (akan terlihat di Logcat)
+        Log.d("FixItApp", "Periodic sync work scheduled.")
     }
 }

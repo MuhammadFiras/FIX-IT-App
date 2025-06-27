@@ -28,14 +28,16 @@ class ServiceOrderRepositoryImpl(
 
     // Fungsi bantu untuk melakukan sinkronisasi penuh dari Firebase ke Room
     // Ini akan dipanggil setelah setiap operasi tulis (create, update, delete)
-    private suspend fun syncAllOrdersFromFirebaseToRoom() { // <-- Pastikan fungsi ini ada
-        withContext(Dispatchers.IO) {
+    override suspend fun syncAllOrdersFromFirebaseToRoom(): Result<Unit> {
+        return withContext(Dispatchers.IO) {
             try {
-                val remoteOrders = remoteDataSource.getServiceOrders().first() // .first() mengambil snapshot pertama dari Flow Firebase
-                localDataSource.insertAllOrders(remoteOrders.map { it.toEntity() }) // Sisipkan semua yang baru
+                val remoteOrders = remoteDataSource.getServiceOrders().first()
+                localDataSource.insertAllOrders(remoteOrders.map { it.toEntity() })
                 Log.d("RepositorySync", "Full sync from Firebase to Room: ${remoteOrders.size} orders.")
+                Result.success(Unit)
             } catch (e: Exception) {
                 Log.e("RepositorySync", "Failed to sync all orders from Firebase to Room: ${e.message}")
+                Result.failure(e)
             }
         }
     }
@@ -47,6 +49,7 @@ class ServiceOrderRepositoryImpl(
                 repositoryScope.launch {
                     try {
                         localDataSource.insertOrder(createdOrder.toEntity())
+                        localDataSource.deleteAllOrders() // Hapus semua yang lama di Room
                         Log.d("CacheCheck", "Order ${createdOrder.id} inserted into local Room DB after Firebase success.")
                         syncAllOrdersFromFirebaseToRoom() // <-- PANGGIL KEMBALI INI
                     } catch (e: Exception) {
@@ -143,6 +146,7 @@ class ServiceOrderRepositoryImpl(
         // Hanya updateLocalCache yang akan memanggil insertAllOrders.
         return withContext(Dispatchers.IO) {
             try {
+                localDataSource.deleteAllOrders() // Hapus semua yang lama di Room
                 localDataSource.insertAllOrders(orders.map { it.toEntity() })
                 Log.d("CacheCheck", "Successfully inserted/updated ${orders.size} orders into local Room DB (from insertAllOrdersToLocal).")
                 Result.success(Unit)
