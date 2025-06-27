@@ -11,8 +11,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import android.util.Log
-import kotlinx.coroutines.Job // Import Job
-import kotlinx.coroutines.flow.onCompletion // Tambahkan ini jika belum ada
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.onCompletion
+// Hapus import delay, flow
+// import kotlinx.coroutines.delay
+// import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.collectLatest // Tambahkan ini jika belum ada
 
 data class OrderUiState(
     val activeOrders: List<ServiceOrder> = emptyList(),
@@ -30,56 +34,78 @@ class OrderViewModel(
     private val _uiState = MutableStateFlow(OrderUiState())
     val uiState: StateFlow<OrderUiState> = _uiState.asStateFlow()
 
-    private var refreshJob: Job? = null
+    private var refreshJob: Job? = null // Untuk manual refresh/one-time
+    // HAPUS periodicPullJob
+    // private var periodicPullJob: Job? = null
+    private var realTimeCollectionJob: Job? = null // JOB BARU UNTUK REAL-TIME FOREGROUND
 
     init {
-        fetchActiveOrders() // Mengobservasi Room
-        // triggerRefresh() // Sudah dihapus dari init, hanya dipanggil manual atau dari LaunchedEffect di screen
+        fetchActiveOrders() // Mengobservasi Room (untuk UI)
+        // HAPUS PANGGILAN startPeriodicPull()
+        // startPeriodicPull()
+        startRealTimeCollection() // <-- MULAI KOLEKSI REAL-TIME DI FOREGROUND
     }
 
-    // Fungsi untuk memicu refresh
-    fun triggerRefresh() {
+    // --- FUNGSI BARU UNTUK KOLEKSI REAL-TIME DI FOREGROUND ---
+    private fun startRealTimeCollection() {
+        // Hentikan job sebelumnya jika ada untuk menghindari duplikasi listener
+        realTimeCollectionJob?.cancel()
+        realTimeCollectionJob = viewModelScope.launch {
+            Log.d("OrderViewModel", "Starting real-time collection from FirebaseDataSource.allServiceOrders.")
+            // MENGAMBIL FLOW REAL-TIME DARI FirebaseDataSource
+            serviceOrderUseCases.getServiceOrdersRealTime() // <-- KUNCI: AMBIL DARI REAL-TIME FLOW
+                .catch { e ->
+                    Log.e("OrderViewModel", "Error in real-time collection Flow: ${e.message}", e)
+                }
+                .collect { allRemoteOrders ->
+                    // Setiap kali ada emisi baru dari Firebase (real-time), update Room
+                    Log.d("OrderViewModel", "Real-time collected ${allRemoteOrders.size} orders from Firebase. Updating Room via insertAllOrdersToLocal.")
+                    // Ini akan memicu ServiceOrderRepositoryImpl.insertAllOrdersToLocal()
+                    // yang akan melakukan deleteAll then insertAll
+                    serviceOrderUseCases.insertAllOrdersToLocal(allRemoteOrders)
+                }
+        }
+    }
+
+
+    // Fungsi untuk memicu refresh manual (jika tombol refresh ada)
+    fun triggerManualRefresh() {
         if (refreshJob?.isActive == true) {
-            Log.d("OrderViewModel", "Refresh job already active, skipping trigger.")
-            return // Hindari multiple refreshes
+            Log.d("OrderViewModel", "Manual refresh job already active, skipping.")
+            return
         }
         refreshJob = viewModelScope.launch {
-            Log.d("OrderViewModel", "Starting remote refresh of all orders (triggered by user/manual)...")
-            _uiState.value = _uiState.value.copy(isLoading = true) // Tampilkan loading saat refresh manual
+            Log.d("OrderViewModel", "Starting manual refresh of all orders (triggered by user/init)...")
+            _uiState.value = _uiState.value.copy(isLoading = true)
             try {
-                serviceOrderUseCases.getServiceOrders()
-                    .catch { e ->
-                        Log.e("OrderViewModel", "Error collecting orders from remote for refresh: ${e.message}")
-                    }
-                    .onCompletion { cause ->
-                        if (cause == null) {
-                            Log.d("OrderViewModel", "Remote orders Flow completed normally.")
-                        } else {
-                            Log.e("OrderViewModel", "Remote orders Flow terminated with: ${cause.message}")
-                        }
-                    }
-                    .collect { allRemoteOrders ->
-                        serviceOrderUseCases.insertAllOrdersToLocal(allRemoteOrders)
-                        Log.d("OrderViewModel", "Finished inserting/updating ${allRemoteOrders.size} orders to local DB via Flow.")
-                        _uiState.value = _uiState.value.copy(isLoading = false) // Sembunyikan loading
-                    }
+                // Panggil sync penuh dari Repository
+                // Ini akan memicu ServiceOrderRepositoryImpl.syncAllOrdersFromFirebaseToRoom()
+                val result = serviceOrderUseCases.syncAllOrdersFromFirebaseToRoom()
+                result.onSuccess {
+                    Log.d("OrderViewModel", "Manual refresh completed successfully. UI should update from Room's Flow.")
+                }.onFailure { e ->
+                    Log.e("OrderViewModel", "Manual refresh failed in UseCase: ${e.message}")
+                }
+                _uiState.value = _uiState.value.copy(isLoading = false)
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(errorMessage = e.message ?: "Failed to refresh orders from remote")
-                Log.e("OrderViewModel", "Outer catch: Error refreshing orders from remote: ${e.message}")
-                _uiState.value = _uiState.value.copy(isLoading = false) // Sembunyikan loading
+                _uiState.value = _uiState.value.copy(errorMessage = e.message ?: "Failed to perform manual refresh")
+                Log.e("OrderViewModel", "Error during manual refresh: ${e.message}")
+                _uiState.value = _uiState.value.copy(isLoading = false)
             }
         }
     }
 
+    // HAPUS FUNGSI startPeriodicPull() INI
+    // private fun startPeriodicPull() { ... }
+
     private fun fetchActiveOrders() { // Ini tetap mengobservasi Room
         viewModelScope.launch {
             Log.d("OrderViewModel", "Fetching active orders from Room (fetchActiveOrders)...")
-            // _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null) // Loading handle di triggerRefresh
             serviceOrderUseCases.getActiveServiceOrders()
                 .catch { e ->
                     Log.e("OrderViewModel", "Error collecting active orders from Room UseCase: ${e.message}")
                     _uiState.value = _uiState.value.copy(
-                        isLoading = false, // Sembunyikan loading
+                        isLoading = false,
                         errorMessage = e.message ?: "Failed to load active orders"
                     )
                 }
@@ -87,7 +113,6 @@ class OrderViewModel(
                     Log.d("OrderViewModel", "UI State updated with ${orders.size} active orders from Room.")
                     _uiState.value = _uiState.value.copy(
                         activeOrders = orders,
-                        // isLoading = false // Sembunyikan loading
                     )
                 }
         }
@@ -140,5 +165,12 @@ class OrderViewModel(
 
     fun updateUiState(updater: (OrderUiState) -> OrderUiState) {
         _uiState.value = updater(_uiState.value)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        refreshJob?.cancel()
+        realTimeCollectionJob?.cancel() // <-- BATALKAN JOB BARU
+        Log.d("OrderViewModel", "OrderViewModel cleared. All jobs cancelled.")
     }
 }

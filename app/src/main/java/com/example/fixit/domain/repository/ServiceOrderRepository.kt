@@ -13,4 +13,5 @@ interface ServiceOrderRepository {
     suspend fun insertAllOrdersToLocal(orders: List<ServiceOrder>): Result<Unit>
     fun getCompletedServiceOrders(): Flow<List<ServiceOrder>> // Pastikan ini ada
     suspend fun syncAllOrdersFromFirebaseToRoom(): Result<Unit>
+    fun getServiceOrdersRealTime(): Flow<List<ServiceOrder>> // <-- TAMBAHKAN INI (Delegasikan ke FirebaseDataSource.allServiceOrders)
 }

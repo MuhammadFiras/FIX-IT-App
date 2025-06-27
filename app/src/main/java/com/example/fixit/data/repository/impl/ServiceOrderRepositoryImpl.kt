@@ -94,6 +94,14 @@ class ServiceOrderRepositoryImpl(
         }
     }
 
+    // IMPLEMENTASI FUNGSI BARU UNTUK REAL-TIME COLLECTION
+    override fun getServiceOrdersRealTime(): Flow<List<ServiceOrder>> {
+        // Ini akan mengembalikan SharedFlow dari FirebaseServiceOrderDataSource
+        // yang secara otomatis mendengarkan perubahan real-time.
+        Log.d("Repository", "getServiceOrdersRealTime called. Delegating to FirebaseDataSource.allServiceOrders.")
+        return remoteDataSource.allServiceOrders // <-- KUNCI: MENGEMBALIKAN SharedFlow DARI DATA SOURCE
+    }
+
     override fun getServiceOrders(): Flow<List<ServiceOrder>> {
         return localDataSource.getAllOrders()
             .map { entities ->
@@ -104,12 +112,6 @@ class ServiceOrderRepositoryImpl(
             .catch { e ->
                 Log.e("Repository", "Error from local database flow in getServiceOrders: ${e.message}")
                 emit(emptyList())
-            }
-            .onEach { // <-- KEMBALIKAN BLOK ON_EACH INI
-                this@ServiceOrderRepositoryImpl.repositoryScope.launch {
-                    Log.d("RepositorySync", "Triggering full sync from Firebase to Room from getServiceOrders.onEach.")
-                    syncAllOrdersFromFirebaseToRoom()
-                }
             }
     }
 
@@ -132,12 +134,6 @@ class ServiceOrderRepositoryImpl(
             .catch { e ->
                 Log.e("Repository", "Error from local database flow in getActiveOrders: ${e.message}")
                 emit(emptyList())
-            }
-            .onEach { // <-- KEMBALIKAN BLOK ON_EACH INI
-                this@ServiceOrderRepositoryImpl.repositoryScope.launch {
-                    Log.d("RepositorySync", "Triggering full sync from Firebase to Room from getActiveOrders.onEach.")
-                    syncAllOrdersFromFirebaseToRoom()
-                }
             }
     }
 

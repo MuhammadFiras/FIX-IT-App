@@ -117,7 +117,8 @@ class FixItApplication : Application() {
             getActiveServiceOrders = GetActiveServiceOrdersUseCase(serviceOrderRepository),
             insertAllOrdersToLocal = InsertAllOrdersToLocalUseCase(serviceOrderRepository),
             getCompletedServiceOrders = GetCompletedServiceOrdersUseCase(serviceOrderRepository),
-            syncAllOrdersFromFirebaseToRoom = SyncAllOrdersFromFirebaseToRoomUseCase(serviceOrderRepository) // <-- PASTIKAN INI ADA
+            syncAllOrdersFromFirebaseToRoom = SyncAllOrdersFromFirebaseToRoomUseCase(serviceOrderRepository), // <-- PASTIKAN INI ADA
+            getServiceOrdersRealTime = GetServiceOrdersRealTimeUseCase(serviceOrderRepository) // <-- TAMBAHKAN INI
         )
 
         // 6. Background Task
@@ -157,7 +158,7 @@ class FixItApplication : Application() {
     private fun schedulePeriodicSyncWork() {
         // Definisikan request untuk PeriodicWork
         val syncWorkRequest = PeriodicWorkRequestBuilder<SyncWorker>(
-            2, TimeUnit.MINUTES // Ulangi setiap 15 menit (untuk demo/pengujian)
+            1, TimeUnit.MINUTES // Ulangi setiap 15 menit (untuk demo/pengujian)
             // Di produksi, Anda mungkin ingin ini lebih lama, misalnya:
             // 24, TimeUnit.HOURS // Setiap 24 jam
         )
