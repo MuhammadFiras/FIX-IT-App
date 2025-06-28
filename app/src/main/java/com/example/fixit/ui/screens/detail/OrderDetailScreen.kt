@@ -189,6 +189,14 @@ fun OrderDetailScreen(
         }
     }
 
+    // Handle error messages from ViewModel (termasuk "Anda Offline")
+    LaunchedEffect(uiState.errorMessage) {
+        uiState.errorMessage?.let { message ->
+            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+            orderDetailViewModel.updateUiState { it.copy(errorMessage = null) }
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -199,7 +207,10 @@ fun OrderDetailScreen(
                 },
                 title = {
                     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        Text(text = stringResource(R.string.order_detail_title), fontSize = 30.sp, fontWeight = FontWeight.Bold)
+                        Text(
+                            text = stringResource(R.string.order_detail_title) + " " + serviceCategory,
+                            fontSize = 30.sp,
+                            fontWeight = FontWeight.Bold)
                     }
                 }
             )
@@ -321,8 +332,7 @@ fun OrderDetailScreen(
                     modifier = Modifier.fillMaxWidth().height(48.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF37C8B2)),
                     shape = RoundedCornerShape(8.dp),
-                    enabled = !uiState.isLoading
-                ) {
+                    enabled = !uiState.isLoading && uiState.isOnline                 ) {
                     if (uiState.isLoading) {
                         CircularProgressIndicator(color = Color.White)
                     } else {

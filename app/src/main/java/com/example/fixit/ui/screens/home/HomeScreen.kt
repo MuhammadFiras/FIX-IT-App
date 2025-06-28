@@ -75,7 +75,7 @@ fun HomeScreen(navController: NavHostController) {
                         label = stringResource(R.string.category_cleaning),
                         iconRes = R.drawable.cleaning_icon,
                         backgroundColor = Color(0xFFFFF2CC),
-                        onClick = { navController.navigate(Screen.Detail.passArgs("Cleaning")) }
+                        onClick = { navController.navigate(Screen.Detail.passArgs("Pembersihan"))}
                     )
                 }
                 item {
@@ -83,7 +83,7 @@ fun HomeScreen(navController: NavHostController) {
                         label = stringResource(R.string.category_repair),
                         iconRes = R.drawable.repair_icon,
                         backgroundColor = Color(0xFFD4F8D2),
-                        onClick = { navController.navigate(Screen.Detail.passArgs("Repair")) }
+                        onClick = { navController.navigate(Screen.Detail.passArgs("Perbaikan")) }
                     )
                 }
                 item {
@@ -91,7 +91,7 @@ fun HomeScreen(navController: NavHostController) {
                         label = stringResource(R.string.category_painting),
                         iconRes = R.drawable.paint_icon,
                         backgroundColor = Color(0xFFD9C3E5),
-                        onClick = { navController.navigate(Screen.Detail.passArgs("Painting")) }
+                        onClick = { navController.navigate(Screen.Detail.passArgs("Pengecatan")) }
                     )
                 }
                 item {
@@ -99,7 +99,7 @@ fun HomeScreen(navController: NavHostController) {
                         label = stringResource(R.string.category_service),
                         iconRes = R.drawable.servis_icon,
                         backgroundColor = Color(0xFFFFC1D9),
-                        onClick = { navController.navigate(Screen.Detail.passArgs("Service")) }
+                        onClick = { navController.navigate(Screen.Detail.passArgs("Servis")) }
                     )
                 }
             }

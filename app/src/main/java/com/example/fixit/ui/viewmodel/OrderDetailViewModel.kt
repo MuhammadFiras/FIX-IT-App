@@ -28,6 +28,10 @@ import com.example.fixit.R
 import com.example.fixit.util.Constants
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
+import android.net.NetworkRequest
 
 // State untuk UI OrderDetailScreen
 data class OrderDetailUiState(
@@ -41,7 +45,8 @@ data class OrderDetailUiState(
     val isLoading: Boolean = false,
     val orderSubmissionSuccess: Boolean = false,
     val errorMessage: String? = null,
-    val autocompletePredictions: List<AutocompletePrediction> = emptyList()
+    val autocompletePredictions: List<AutocompletePrediction> = emptyList(),
+    val isOnline: Boolean = false
 )
 
 @HiltViewModel
@@ -51,12 +56,14 @@ class OrderDetailViewModel @Inject constructor(
     application: Application
 ) : AndroidViewModel(application) {
 
-    private val analytics: FirebaseAnalytics = Firebase.analytics // Dapatkan instance Analytics
+    private val analytics: FirebaseAnalytics = Firebase.analytics
     private val _uiState = MutableStateFlow(OrderDetailUiState())
     val uiState: StateFlow<OrderDetailUiState> = _uiState.asStateFlow()
 
     private val _events = Channel<OrderDetailEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
+
+    private val connectivityManager = application.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
 
     // Inisialisasi state dari SavedStateHandle atau default
     init {
@@ -65,10 +72,48 @@ class OrderDetailViewModel @Inject constructor(
             customerPhone = savedStateHandle.get<String>("customerPhone") ?: "",
             serviceDescription = savedStateHandle.get<String>("serviceDescription") ?: "",
             locationText = savedStateHandle.get<String>("locationText") ?: "",
-            latitude = savedStateHandle.get<Double>("latitude") ?: 0.0, // Tambahkan ini
-            longitude = savedStateHandle.get<Double>("longitude") ?: 0.0, // Tambahkan ini
+            latitude = savedStateHandle.get<Double>("latitude") ?: 0.0,
+            longitude = savedStateHandle.get<Double>("longitude") ?: 0.0,
             serviceCategory = savedStateHandle.get<String>("serviceCategory") ?: ""
         )
+        monitorNetworkConnectivity()
+    }
+
+    // --- FUNGSI UNTUK MONITOR KONEKSI JARINGAN ---
+    private fun monitorNetworkConnectivity() {
+        val networkRequest = NetworkRequest.Builder()
+            .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+            .build()
+
+        connectivityManager.registerNetworkCallback(networkRequest, object : ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: Network) {
+                super.onAvailable(network)
+                _uiState.value = _uiState.value.copy(isOnline = true, errorMessage = null)
+                Log.d("NetworkMonitor", "Network is AVAILABLE. isOnline: true")
+            }
+
+            override fun onLost(network: Network) {
+                super.onLost(network)
+                _uiState.value = _uiState.value.copy(isOnline = false, errorMessage = "Anda Offline")
+                Log.d("NetworkMonitor", "Network is LOST. isOnline: false")
+            }
+
+            override fun onCapabilitiesChanged(network: Network, networkCapabilities: NetworkCapabilities) {
+                super.onCapabilitiesChanged(network, networkCapabilities)
+                val isConnected = networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                val wasOnline = _uiState.value.isOnline
+                if (isConnected != wasOnline) { // Hanya update jika status berubah
+                    _uiState.value = _uiState.value.copy(isOnline = isConnected, errorMessage = if (!isConnected) "Anda Offline" else null)
+                    Log.d("NetworkMonitor", "Network capabilities changed. isOnline: $isConnected")
+                }
+            }
+        })
+        // Periksa status awal koneksi saat pertama kali mendaftar
+        val initialNetworkStatus = connectivityManager.activeNetwork?.let {
+            connectivityManager.getNetworkCapabilities(it)?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+        } ?: false
+        _uiState.value = _uiState.value.copy(isOnline = initialNetworkStatus, errorMessage = if (!initialNetworkStatus) "Anda Offline" else null)
+        Log.d("NetworkMonitor", "Initial network status: $initialNetworkStatus")
     }
 
     // --- Fungsi untuk memperbarui state UI ---
@@ -114,6 +159,11 @@ class OrderDetailViewModel @Inject constructor(
     // Fungsi untuk mengirim pesanan baru
     fun submitOrder() {
         viewModelScope.launch {
+            if (!uiState.value.isOnline) {
+                _uiState.value = _uiState.value.copy(errorMessage = "Anda Offline")
+                Log.d("OrderDetailVM", "Submit blocked: App is offline.")
+                return@launch // Hentikan proses jika offline
+            }
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null, orderSubmissionSuccess = false)
 
             val currentState = _uiState.value
@@ -198,7 +248,7 @@ fun shouldShowRequestPermissionRationale(context: Context, permission: String): 
     return if (activity != null) {
         androidx.core.app.ActivityCompat.shouldShowRequestPermissionRationale(activity, permission)
     } else {
-        false // Cannot determine without an Activity context
+        false
     }
 }
 

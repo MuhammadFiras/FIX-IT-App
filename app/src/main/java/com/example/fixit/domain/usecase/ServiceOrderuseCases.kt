@@ -15,11 +15,11 @@ data class ServiceOrderUseCases(
     val getActiveServiceOrders: GetActiveServiceOrdersUseCase,
     val insertAllOrdersToLocal: InsertAllOrdersToLocalUseCase,
     val getCompletedServiceOrders: GetCompletedServiceOrdersUseCase,
-    val syncAllOrdersFromFirebaseToRoom: SyncAllOrdersFromFirebaseToRoomUseCase, // Pastikan ini ada dan namanya persis
-    val getServiceOrdersRealTime: GetServiceOrdersRealTimeUseCase // <-- TAMBAHKAN INI
+    val syncAllOrdersFromFirebaseToRoom: SyncAllOrdersFromFirebaseToRoomUseCase,
+    val getServiceOrdersRealTime: GetServiceOrdersRealTimeUseCase
 )
 
-// --- Definisi Use Case Individual ---
+// Definisi Use Case Individual
 
 class CreateServiceOrderUseCase @Inject constructor( private val repository: ServiceOrderRepository) {
     suspend operator fun invoke(order: ServiceOrder): Result<ServiceOrder> {
@@ -78,14 +78,12 @@ class GetCompletedServiceOrdersUseCase @Inject constructor( private val reposito
     }
 }
 
-// DEFINISI KELAS USE CASE UNTUK SINKRONISASI PENUH
 class SyncAllOrdersFromFirebaseToRoomUseCase @Inject constructor( private val repository: ServiceOrderRepository) {
     suspend operator fun invoke(): Result<Unit> {
         return repository.syncAllOrdersFromFirebaseToRoom()
     }
 }
 
-// Use Case baru untuk mendapatkan Flow real-time langsung dari RemoteDataSource
 class GetServiceOrdersRealTimeUseCase @Inject constructor( private val repository: ServiceOrderRepository) {
     operator fun invoke(): Flow<List<ServiceOrder>> {
         // Repository akan mendelegasikan ke FirebaseServiceOrderDataSource.allServiceOrders

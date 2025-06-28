@@ -46,7 +46,7 @@
     <!-- password -->
     <string name="password">Kata Sandi</string>
     <string name="confirm_password">Konfirmasi Kata Sandi</string>
-    <string name="order_detail_title">Detail Layanan</string>
+    <string name="order_detail_title">Detail</string>
     <string name="name">Nama</string>
     <string name="description">Deskripsi</string>
     <string name="customer_detail">Detail Pelanggan</string>
