@@ -19,12 +19,13 @@ import kotlinx.coroutines.Dispatchers // Pastikan ini diimpor jika pakai SharedF
 import kotlinx.coroutines.cancel // Pastikan ini diimpor jika pakai SharedFlow
 import kotlinx.coroutines.channels.BufferOverflow // Pastikan ini diimpor jika pakai SharedFlow
 import kotlinx.coroutines.flow.conflate
+import javax.inject.Inject
 
 const val SERVICE_ORDERS_COLLECTION = "service_orders"
 
 private val firestoreListenerScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-class FirebaseServiceOrderDataSource(
+class FirebaseServiceOrderDataSource @Inject constructor(
     private val firestore: FirebaseFirestore
 ) : RemoteDataSource {
 

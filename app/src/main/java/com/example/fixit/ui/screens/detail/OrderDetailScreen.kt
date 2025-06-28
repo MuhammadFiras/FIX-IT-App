@@ -67,6 +67,7 @@ import java.util.Arrays
 import java.util.Locale
 import androidx.compose.runtime.rememberCoroutineScope // Import ini
 import android.Manifest.permission.ACCESS_COARSE_LOCATION // <-- TAMBAHKAN IMPORT INI
+import androidx.hilt.navigation.compose.hiltViewModel // <-- TAMBAHKAN INI
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -74,25 +75,13 @@ fun OrderDetailScreen(
     navController: NavHostController,
     serviceCategory: String,
 ) {
-    val application = LocalContext.current.applicationContext as FixItApplication
-    val serviceOrderUseCases = application.serviceOrderUseCases
     val context = LocalContext.current
     val activity = context.findActivity()
 
     // Inisialisasi Places client
     val placesClient = remember { Places.createClient(context) }
 
-    val orderDetailViewModel: OrderDetailViewModel = viewModel(
-        factory = viewModelFactory {
-            initializer {
-                OrderDetailViewModel(
-                    serviceOrderUseCases = serviceOrderUseCases,
-                    savedStateHandle = createSavedStateHandle(),
-                    application = application
-                )
-            }
-        }
-    )
+    val orderDetailViewModel: OrderDetailViewModel = hiltViewModel() // <-- GANTI DENGAN INI
 
     val uiState by orderDetailViewModel.uiState.collectAsState()
 
@@ -345,10 +334,7 @@ fun OrderDetailScreen(
     }
 }
 
-// =====================================================================
 // HELPER FUNCTIONS UNTUK LOKASI DAN PLACES API
-// =====================================================================
-
 private fun startLocationUpdates(
     fusedLocationClient: FusedLocationProviderClient,
     locationCallback: LocationCallback,

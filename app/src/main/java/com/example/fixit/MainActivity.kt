@@ -14,20 +14,21 @@ import com.example.fixit.ui.navigation.Screen
 import com.example.fixit.ui.screens.editprofile.EditProfileScreen
 import com.example.fixit.ui.screens.profile.ProfileScreen
 import com.example.fixit.ui.theme.FIXITTheme
-// Untuk debugging Crashlytics, hapus setelah verifikasi
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.foundation.layout.Column
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.fillMaxSize
 import com.google.firebase.crashlytics.FirebaseCrashlytics
-import android.Manifest // <-- TAMBAHKAN INI
-import android.content.pm.PackageManager // <-- TAMBAHKAN INI
-import android.os.Build // <-- TAMBAHKAN INI
-import androidx.activity.result.contract.ActivityResultContracts // <-- TAMBAHKAN INI
-import androidx.core.content.ContextCompat // <-- TAMBAHKAN INI
-import android.util.Log // <-- TAMBAHKAN INI
+import dagger.hilt.android.AndroidEntryPoint
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import android.util.Log
 
+@AndroidEntryPoint // <-- TAMBAHKAN ANOTASI INI
 class MainActivity : ComponentActivity() {
     // Register ActivityResultLauncher untuk meminta izin notifikasi
     private val requestPermissionLauncher = registerForActivityResult(

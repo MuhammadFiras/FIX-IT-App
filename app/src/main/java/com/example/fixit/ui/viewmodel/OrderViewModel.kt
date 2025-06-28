@@ -16,7 +16,9 @@ import kotlinx.coroutines.flow.onCompletion
 // Hapus import delay, flow
 // import kotlinx.coroutines.delay
 // import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.collectLatest // Tambahkan ini jika belum ada
+import kotlinx.coroutines.flow.collectLatest
+import dagger.hilt.android.lifecycle.HiltViewModel // <-- TAMBAHKAN INI
+import javax.inject.Inject // <-- TAMBAHKAN INI
 
 data class OrderUiState(
     val activeOrders: List<ServiceOrder> = emptyList(),
@@ -26,7 +28,8 @@ data class OrderUiState(
     val orderToDelete: ServiceOrder? = null
 )
 
-class OrderViewModel(
+@HiltViewModel // <-- TAMBAHKAN ANOTASI INI
+class OrderViewModel @Inject constructor(
     private val serviceOrderUseCases: ServiceOrderUseCases,
     application: Application
 ) : AndroidViewModel(application) {

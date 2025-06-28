@@ -27,21 +27,14 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.fixit.domain.usecase.ServiceOrderUseCases
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Warning // Import icon warning
+import androidx.compose.material.icons.filled.Warning
+import androidx.hilt.navigation.compose.hiltViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OrderScreen(navController: NavHostController) {
-    val application = LocalContext.current.applicationContext as FixItApplication
-    val serviceOrderUseCases = application.serviceOrderUseCases
 
-    val orderViewModel: OrderViewModel = viewModel(
-        factory = viewModelFactory {
-            initializer {
-                OrderViewModel(serviceOrderUseCases, application) // Teruskan application
-            }
-        }
-    )
+    val orderViewModel: OrderViewModel = hiltViewModel() // <-- GANTI DENGAN INI
 
     val uiState by orderViewModel.uiState.collectAsState()
     val context = LocalContext.current

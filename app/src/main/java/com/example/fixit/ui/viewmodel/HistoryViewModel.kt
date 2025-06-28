@@ -11,6 +11,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import android.util.Log
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
 data class HistoryUiState(
     val completedOrders: List<ServiceOrder> = emptyList(),
@@ -18,7 +20,8 @@ data class HistoryUiState(
     val errorMessage: String? = null
 )
 
-class HistoryViewModel(
+@HiltViewModel
+class HistoryViewModel @Inject constructor(
     private val serviceOrderUseCases: ServiceOrderUseCases,
     application: Application
 ) : AndroidViewModel(application) {

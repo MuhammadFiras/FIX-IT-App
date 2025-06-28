@@ -21,45 +21,42 @@ import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
 import com.example.fixit.util.Constants
-import androidx.work.ExistingPeriodicWorkPolicy // <-- TAMBAHKAN INI
-import androidx.work.PeriodicWorkRequestBuilder // <-- TAMBAHKAN INI
-import androidx.work.WorkManager // <-- TAMBAHKAN INI
-import java.util.concurrent.TimeUnit // <-- TAMBAHKAN INI
-import com.example.fixit.worker.SyncWorker // <-- TAMBAHKAN INI (Pastikan ini mengarah ke file SyncWorker.kt Anda)
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import java.util.concurrent.TimeUnit
+import com.example.fixit.worker.SyncWorker
+import dagger.hilt.android.HiltAndroidApp
 
+@HiltAndroidApp
 class FixItApplication : Application() {
 
-    // Variabel untuk menyimpan instance database Room
+    // --- KEMBALIKAN VARIABEL LATEINIT INI UNTUK AKSES MANUAL ---
+    // Hilt akan tetap menginjeksinya ke komponen yang di-Hilt,
+    // tetapi ini memungkinkan akses manual dari luar.
     lateinit var database: AppDatabase
         private set
-
-    // Variabel untuk menyimpan instance DAO (Data Access Object)
     lateinit var serviceOrderDao: ServiceOrderDao
         private set
-
-    // Variabel untuk menyimpan instance data source Firebase
     lateinit var firebaseServiceOrderDataSource: FirebaseServiceOrderDataSource
         private set
-
-    // Variabel untuk menyimpan instance repository
     lateinit var serviceOrderRepository: ServiceOrderRepository
         private set
-
-    // Variabel untuk menyimpan instance use cases
     lateinit var serviceOrderUseCases: ServiceOrderUseCases
         private set
+    lateinit var serviceOrderRepositoryImpl: ServiceOrderRepositoryImpl
 
+
+    // --- KEMBALIKAN COMPANION OBJECT INI ---
     companion object {
         lateinit var instance: FixItApplication
             private set
     }
 
-    lateinit var serviceOrderRepositoryImpl: ServiceOrderRepositoryImpl // <-- TAMBAHKAN INI
-
     override fun onCreate() {
         super.onCreate()
-        instance = this
-        // Inisialisasi Firebase (jika belum)
+
+        // Inisialisasi Firebase
         if (FirebaseApp.getApps(this).isEmpty()) {
             FirebaseApp.initializeApp(this)
             Log.d("FixItApp", "FirebaseApp Initialized in FixItApplication")
@@ -91,23 +88,22 @@ class FixItApplication : Application() {
 
         createNotificationChannel()
 
-        // 1. Inisialisasi Room Database
+        // --- KEMBALIKAN SEMUA BLOK INISIALISASI MANUAL INI ---
+        // Ini memastikan variabel lateinit di atas mendapatkan nilai
+        // dan bisa diakses oleh SyncWorker yang tidak di-Hilt
         database = Room.databaseBuilder(
             applicationContext,
             AppDatabase::class.java,
             "fixit_database"
         ).build()
 
-        // 2. Dapatkan DAO dari database
         serviceOrderDao = database.serviceOrderDao()
 
-        // 3. Inisialisasi Data Source Firebase
         firebaseServiceOrderDataSource = FirebaseServiceOrderDataSource(firestoreInstance)
 
-        // 4. Inisialisasi Repository dengan kedua data source
-        serviceOrderRepository = ServiceOrderRepositoryImpl(firebaseServiceOrderDataSource, serviceOrderDao)
+        serviceOrderRepositoryImpl = ServiceOrderRepositoryImpl(firebaseServiceOrderDataSource, serviceOrderDao)
+        serviceOrderRepository = serviceOrderRepositoryImpl
 
-        // 5. Inisialisasi Use Cases dengan repository
         serviceOrderUseCases = ServiceOrderUseCases(
             createServiceOrder = CreateServiceOrderUseCase(serviceOrderRepository),
             getServiceOrders = GetServiceOrdersUseCase(serviceOrderRepository),
@@ -117,17 +113,22 @@ class FixItApplication : Application() {
             getActiveServiceOrders = GetActiveServiceOrdersUseCase(serviceOrderRepository),
             insertAllOrdersToLocal = InsertAllOrdersToLocalUseCase(serviceOrderRepository),
             getCompletedServiceOrders = GetCompletedServiceOrdersUseCase(serviceOrderRepository),
-            syncAllOrdersFromFirebaseToRoom = SyncAllOrdersFromFirebaseToRoomUseCase(serviceOrderRepository), // <-- PASTIKAN INI ADA
-            getServiceOrdersRealTime = GetServiceOrdersRealTimeUseCase(serviceOrderRepository) // <-- TAMBAHKAN INI
+            syncAllOrdersFromFirebaseToRoom = SyncAllOrdersFromFirebaseToRoomUseCase(serviceOrderRepository),
+            getServiceOrdersRealTime = GetServiceOrdersRealTimeUseCase(serviceOrderRepository)
         )
+        // --- AKHIR BLOK INISIALISASI MANUAL YANG DIKEMBALIKAN ---
 
-        // 6. Background Task
+        // Jadwalkan Background Task (WorkManager)
         schedulePeriodicSyncWork()
     }
-    override fun onTerminate() { // <-- TAMBAHKAN METODE INI
+
+    override fun onTerminate() {
         super.onTerminate()
-        // Batalkan scope repository saat aplikasi dimatikan untuk mencegah memory leak
+        // Ini akan tetap ada, karena instance kita sendiri yang mengelola scope
         serviceOrderRepositoryImpl.cancelScope()
+        if (this::firebaseServiceOrderDataSource.isInitialized) {
+            firebaseServiceOrderDataSource.cancelListenerScope()
+        }
     }
 
     private fun createNotificationChannel() {
@@ -158,22 +159,13 @@ class FixItApplication : Application() {
     private fun schedulePeriodicSyncWork() {
         // Definisikan request untuk PeriodicWork
         val syncWorkRequest = PeriodicWorkRequestBuilder<SyncWorker>(
-            1, TimeUnit.MINUTES // Ulangi setiap 15 menit (untuk demo/pengujian)
-            // Di produksi, Anda mungkin ingin ini lebih lama, misalnya:
-            // 24, TimeUnit.HOURS // Setiap 24 jam
+            15, TimeUnit.MINUTES // Ulangi setiap 15 menit (untuk demo/pengujian)
         )
-            // Anda bisa menambahkan Constraints (kondisi kapan tugas bisa berjalan) di sini, contoh:
-            // .setConstraints(Constraints.Builder()
-            //     .setRequiredNetworkType(NetworkType.CONNECTED) // Hanya jika ada koneksi jaringan
-            //     .setRequiresBatteryNotLow(true) // Hanya jika baterai tidak lemah
-            //     .build())
             .build() // Bangun objek work request
 
         // Dapatkan instance WorkManager dan antrekan tugas unik
         WorkManager.getInstance(this).enqueueUniquePeriodicWork(
             "FixIT_Periodic_Sync_Work", // Nama unik untuk tugas ini. Pastikan ini unik di seluruh aplikasi Anda.
-            // Jika tugas dengan nama ini sudah ada, KEEP berarti pertahankan yang sudah ada.
-            // REPLACE berarti batalkan yang lama dan antrekan yang baru.
             ExistingPeriodicWorkPolicy.KEEP,
             syncWorkRequest
         )

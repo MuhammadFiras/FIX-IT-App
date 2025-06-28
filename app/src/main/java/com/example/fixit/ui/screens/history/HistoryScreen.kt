@@ -33,20 +33,14 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import androidx.compose.runtime.getValue
+import androidx.hilt.navigation.compose.hiltViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HistoryScreen(navController: NavHostController) {
-    val application = LocalContext.current.applicationContext as FixItApplication
-    val serviceOrderUseCases = application.serviceOrderUseCases
 
-    val historyViewModel: HistoryViewModel = viewModel(
-        factory = viewModelFactory {
-            initializer {
-                HistoryViewModel(serviceOrderUseCases, application)
-            }
-        }
-    )
+    val historyViewModel: HistoryViewModel = hiltViewModel() // <-- GANTI DENGAN INI
+
 
     val uiState by historyViewModel.uiState.collectAsState()
     val context = LocalContext.current

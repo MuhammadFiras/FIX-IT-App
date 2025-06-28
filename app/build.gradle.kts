@@ -6,6 +6,7 @@ plugins {
     id("com.google.firebase.crashlytics") // For Crashlytics
     id("kotlin-parcelize")
     id("com.google.devtools.ksp") // For KSP
+    id("com.google.dagger.hilt.android") // <-- TAMBAHKAN BARIS INI
 }
 
 android {
@@ -92,6 +93,18 @@ dependencies {
     ksp("androidx.room:room-compiler:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
 
-    implementation("androidx.work:work-runtime-ktx:2.9.0") // <-- TAMBAHKAN BARIS INI
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
+
+    // --- DEPENDENSI HILT ---
+    // Library Hilt utama
+    implementation("com.google.dagger:hilt-android:2.51") // <-- TAMBAHKAN BARIS INI (VERSINYA SAMA DENGAN PLUGIN)
+    // Annotation processor untuk Hilt (penting untuk code generation)
+    ksp("com.google.dagger:hilt-compiler:2.51") // <-- TAMBAHKAN BARIS INI (Gunakan 'ksp' karena Anda sudah memakainya)
+
+    // Dependensi Hilt untuk integrasi dengan Jetpack ViewModel/Compose
+    implementation("androidx.hilt:hilt-navigation-compose:1.2.0") // <-- TAMBAHKAN BARIS INI (untuk Compose Navigation)
+    // Jika Anda menggunakan WorkManager dengan Hilt, Anda juga perlu ini:
+    implementation("androidx.hilt:hilt-work:1.2.0") // <-- TAMBAHKAN BARIS INI (jika ingin WorkManager diinjeksi Hilt)
+    ksp("androidx.hilt:hilt-compiler:1.2.0") // <-- TAMBAHKAN BARIS INI (annotation processor untuk androidx.hilt)
 
 }

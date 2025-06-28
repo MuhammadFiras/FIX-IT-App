@@ -18,8 +18,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.onEach // <-- Pastikan ini diimpor
+import javax.inject.Inject
 
-class ServiceOrderRepositoryImpl(
+class ServiceOrderRepositoryImpl @Inject constructor(
     private val remoteDataSource: FirebaseServiceOrderDataSource,
     private val localDataSource: ServiceOrderDao
 ) : ServiceOrderRepository {
