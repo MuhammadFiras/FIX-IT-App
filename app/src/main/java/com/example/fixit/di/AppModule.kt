@@ -79,13 +79,9 @@ object AppModule {
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {
-
-    // --- BIND REPOSITORY INTERFACE KE IMPLEMENTASI ---
-    // Ini memberitahu Hilt: "Jika ada yang meminta ServiceOrderRepository (interface),
-    // berikan instance ServiceOrderRepositoryImpl."
     @Binds
     @Singleton
     abstract fun bindServiceOrderRepository(
-        serviceOrderRepositoryImpl: ServiceOrderRepositoryImpl // Hilt akan membangun ini
+        serviceOrderRepositoryImpl: ServiceOrderRepositoryImpl
     ): ServiceOrderRepository
 }

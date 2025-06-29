@@ -26,17 +26,16 @@ import android.util.Log // Tambahkan ini untuk Log.d
 @Composable
 fun OnboardingScreen(navController: NavHostController) {
     var showLoading by rememberSaveable { mutableStateOf(false) }
-    val analytics: FirebaseAnalytics = Firebase.analytics // <-- DAPATKAN INSTANCE ANALYTICS DI SINI
+    val analytics: FirebaseAnalytics = Firebase.analytics
 
     if (showLoading) {
         LoadingScreen()
         LaunchedEffect(Unit) {
-            delay(2000) // simulate loading before navigating to Home
+            delay(2000)
             navController.navigate(Screen.Home.route) {
                 popUpTo(Screen.Onboarding.route) { inclusive = true }
             }
-            // --- SET USER PROPERTY SETELAH NAVIGASI KE HOME ---
-            analytics.setUserProperty("user_type", "Tenant") // Contoh: Set user_type ke "Tenant"
+            analytics.setUserProperty("user_type", "Tenant")
             Log.d("FirebaseAnalytics", "User property 'user_type' set to 'Tenant' after onboarding.")
         }
     } else {

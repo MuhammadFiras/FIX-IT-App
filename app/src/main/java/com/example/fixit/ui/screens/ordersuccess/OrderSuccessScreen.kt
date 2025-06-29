@@ -32,12 +32,10 @@ fun OrderSuccessScreen(navController: NavHostController) {
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .padding(32.dp),
-        verticalArrangement = Arrangement.Center, // Pusatkan konten
+        verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(modifier = Modifier.height(50.dp))
-
-        // Lottie animation for success (gunakan lottie Anda di R.raw.nama_lottie_anda)
         LottieAnimation(
             composition = composition,
             progress = { progress },
@@ -47,7 +45,7 @@ fun OrderSuccessScreen(navController: NavHostController) {
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = stringResource(id = R.string.order_success_title), // Tambahkan string ini di strings.xml
+            text = stringResource(id = R.string.order_success_title),
             color = MaterialTheme.colorScheme.onBackground,
             style = MaterialTheme.typography.headlineLarge,
             fontSize = 28.sp,
@@ -56,7 +54,7 @@ fun OrderSuccessScreen(navController: NavHostController) {
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = stringResource(id = R.string.order_success_desc), // Tambahkan string ini di strings.xml
+            text = stringResource(id = R.string.order_success_desc),
             color = MaterialTheme.colorScheme.onBackground,
             style = MaterialTheme.typography.bodyLarge,
             fontSize = 16.sp,
@@ -70,22 +68,21 @@ fun OrderSuccessScreen(navController: NavHostController) {
         Button(
             onClick = {
                 navController.navigate(Screen.Order.route) {
-                    // Pop up to Home screen to clear the back stack from OrderDetail
-                    popUpTo(Screen.Home.route) { inclusive = false } // Keep Home in back stack
-                    launchSingleTop = true // Avoid multiple copies of OrderScreen
+                    popUpTo(Screen.Home.route) { inclusive = false }
+                    launchSingleTop = true
                 }
             },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF37C8B2), // Warna hijau yang cerah
+                containerColor = Color(0xFF37C8B2),
                 contentColor = Color.White
             )
         ) {
             Icon(Icons.Default.CheckCircle, contentDescription = "Lihat Pesanan")
             Spacer(Modifier.width(8.dp))
-            Text(text = stringResource(id = R.string.view_active_orders)) // Tambahkan string ini
+            Text(text = stringResource(id = R.string.view_active_orders))
         }
     }
 }

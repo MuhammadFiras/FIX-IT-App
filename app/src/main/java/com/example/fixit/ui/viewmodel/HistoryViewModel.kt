@@ -31,8 +31,6 @@ class HistoryViewModel @Inject constructor(
 
     init {
         fetchCompletedOrders()
-        // Optional: Anda bisa panggil sync penuh di sini juga jika mau memastikan data terbaru
-        // serviceOrderUseCases.syncAllOrdersFromFirebaseToRoom()
     }
 
     private fun fetchCompletedOrders() {

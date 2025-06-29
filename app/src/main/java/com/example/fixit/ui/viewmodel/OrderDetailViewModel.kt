@@ -30,10 +30,10 @@ import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
-import com.google.firebase.analytics.FirebaseAnalytics // <-- PASTIKAN INI DIIMPOR
-import com.google.firebase.analytics.ktx.analytics // <-- PASTIKAN INI DIIMPOR
-import com.google.firebase.analytics.ktx.logEvent // <-- PASTIKAN INI DIIMPOR
-import com.google.firebase.ktx.Firebase // <-- PASTIKAN INI DIIMPOR
+import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.analytics.ktx.analytics
+import com.google.firebase.analytics.ktx.logEvent
+import com.google.firebase.ktx.Firebase
 
 // State untuk UI OrderDetailScreen
 data class OrderDetailUiState(
@@ -81,7 +81,6 @@ class OrderDetailViewModel @Inject constructor(
         monitorNetworkConnectivity()
     }
 
-    // --- FUNGSI UNTUK MONITOR KONEKSI JARINGAN ---
     private fun monitorNetworkConnectivity() {
         val networkRequest = NetworkRequest.Builder()
             .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
@@ -104,13 +103,13 @@ class OrderDetailViewModel @Inject constructor(
                 super.onCapabilitiesChanged(network, networkCapabilities)
                 val isConnected = networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
                 val wasOnline = _uiState.value.isOnline
-                if (isConnected != wasOnline) { // Hanya update jika status berubah
+                if (isConnected != wasOnline) {
                     _uiState.value = _uiState.value.copy(isOnline = isConnected, errorMessage = if (!isConnected) "Anda Offline" else null)
                     Log.d("NetworkMonitor", "Network capabilities changed. isOnline: $isConnected")
                 }
             }
         })
-        // Periksa status awal koneksi saat pertama kali mendaftar
+
         val initialNetworkStatus = connectivityManager.activeNetwork?.let {
             connectivityManager.getNetworkCapabilities(it)?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
         } ?: false
@@ -118,13 +117,12 @@ class OrderDetailViewModel @Inject constructor(
         Log.d("NetworkMonitor", "Initial network status: $initialNetworkStatus")
     }
 
-    // --- Fungsi untuk memperbarui state UI ---
     fun updateLocationText(text: String) {
         _uiState.value = _uiState.value.copy(locationText = text)
         savedStateHandle["locationText"] = text
     }
 
-    fun updateLocationCoordinates(lat: Double, lng: Double) { // Tambahkan ini
+    fun updateLocationCoordinates(lat: Double, lng: Double) {
         _uiState.value = _uiState.value.copy(latitude = lat, longitude = lng)
         savedStateHandle["latitude"] = lat
         savedStateHandle["longitude"] = lng
@@ -150,21 +148,20 @@ class OrderDetailViewModel @Inject constructor(
         savedStateHandle["serviceCategory"] = category
     }
 
-    fun updateAutocompletePredictions(predictions: List<AutocompletePrediction>) { // Tambahkan ini
+    fun updateAutocompletePredictions(predictions: List<AutocompletePrediction>) {
         _uiState.value = _uiState.value.copy(autocompletePredictions = predictions)
     }
 
-    fun clearAutocompletePredictions() { // Tambahkan ini
+    fun clearAutocompletePredictions() {
         _uiState.value = _uiState.value.copy(autocompletePredictions = emptyList())
     }
 
-    // Fungsi untuk mengirim pesanan baru
     fun submitOrder() {
         viewModelScope.launch {
             if (!uiState.value.isOnline) {
                 _uiState.value = _uiState.value.copy(errorMessage = "Anda Offline")
                 Log.d("OrderDetailVM", "Submit blocked: App is offline.")
-                return@launch // Hentikan proses jika offline
+                return@launch
             }
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null, orderSubmissionSuccess = false)
 
@@ -175,26 +172,26 @@ class OrderDetailViewModel @Inject constructor(
                 serviceCategory = currentState.serviceCategory,
                 serviceDescription = currentState.serviceDescription,
                 locationText = currentState.locationText,
-                latitude = currentState.latitude, // Gunakan latitude dari state
-                longitude = currentState.longitude // Gunakan longitude dari state
+                latitude = currentState.latitude,
+                longitude = currentState.longitude
             )
 
             val result = serviceOrderUseCases.createServiceOrder(newOrder)
 
             _uiState.value = _uiState.value.copy(isLoading = false)
 
-            result.onSuccess { createdOrder -> // <-- TERIMA createdOrder DI SINI
+            result.onSuccess { createdOrder ->
                 _uiState.value = _uiState.value.copy(orderSubmissionSuccess = true)
                 _events.send(OrderDetailEvent.NavigateToOrderSuccess)
                 resetForm()
                 showOrderCreatedNotification(createdOrder)
-                analytics.logEvent("order_created") { // <-- PASTIKAN INI ADA
+                analytics.logEvent("order_created") {
                     param("order_id", createdOrder.id)
                     param("service_category", createdOrder.serviceCategory)
-                    param("customer_name", createdOrder.customerName) // <-- PARAMETER BARU
-                    param("location_text", createdOrder.locationText) // <-- PARAMETER BARU
-                    param("description_length", createdOrder.serviceDescription.length.toLong()) // <-- PARAMETER BARU
-                    param("timestamp_ms", createdOrder.timestamp) // <-- PARAMETER BARU (timestamp)
+                    param("customer_name", createdOrder.customerName)
+                    param("location_text", createdOrder.locationText)
+                    param("description_length", createdOrder.serviceDescription.length.toLong())
+                    param("timestamp_ms", createdOrder.timestamp)
                 }
                 Log.d("FirebaseAnalytics", "Event 'order_created' logged with details for order ID: ${createdOrder.id}.")
             }.onFailure { e ->
@@ -203,7 +200,6 @@ class OrderDetailViewModel @Inject constructor(
         }
     }
 
-    // Fungsi untuk mereset form setelah submit
     private fun resetForm() {
         _uiState.value = OrderDetailUiState(serviceCategory = _uiState.value.serviceCategory)
         savedStateHandle["customerName"] = ""
@@ -221,28 +217,23 @@ class OrderDetailViewModel @Inject constructor(
     // Helper untuk mendapatkan context dari ViewModel untuk Toast di helper functions
     fun getApplicationContext(): Context {
         return (this.javaClass.simpleName.let {
-            // This is a hacky way to get context from ViewModel, typically done via Hilt/DI
             (this.javaClass.classLoader?.loadClass("com.example.fixit.app.FixItApplication") as? Class<FixItApplication>)?.let {
                 it.getMethod("getInstance").invoke(null) as? FixItApplication
             }
         } ?: throw IllegalStateException("Application not found")).applicationContext
     }
 
-    // --- FUNGSI UNTUK MENAMPILKAN NOTIFIKASI ---
     private fun showOrderCreatedNotification(order: ServiceOrder) {
-        // Dapatkan NotificationManager dari sistem melalui application context
         val notificationManager = getApplication<Application>().getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        // Bangun notifikasi menggunakan NotificationCompat.Builder (dari AndroidX Core)
         val notification = NotificationCompat.Builder(getApplication(), Constants.NOTIFICATION_CHANNEL_ID)
-            .setSmallIcon(R.drawable.fixit_logo) // <-- GANTI DENGAN IKON NOTIFIKASI ANDA (di res/drawable)
-            .setContentTitle("Order Baru Dibuat!") // Judul notifikasi
+            .setSmallIcon(R.drawable.fixit_logo)
+            .setContentTitle("Order Baru Dibuat!")
             .setContentText("Jasa '${order.serviceCategory}': ${order.serviceDescription} telah berhasil dibuat.")
-            .setPriority(NotificationCompat.PRIORITY_HIGH) // Prioritas notifikasi (HIGH akan membuat pop-up)
-            .setAutoCancel(true) // Notifikasi akan otomatis hilang saat pengguna mengkliknya
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
             .build()
 
-        // Tampilkan notifikasi
         notificationManager.notify(Constants.NOTIFICATION_ID, notification)
         Log.d("Notification", "Order Created Notification shown for ID: ${order.id}.")
     }
@@ -252,8 +243,6 @@ sealed interface OrderDetailEvent {
     object NavigateToOrderSuccess : OrderDetailEvent
 }
 
-// Helper function to check if shouldShowRequestPermissionRationale
-// (This is usually a method of Activity/Fragment, need context for composable)
 fun shouldShowRequestPermissionRationale(context: Context, permission: String): Boolean {
     val activity = context.findActivity()
     return if (activity != null) {
@@ -263,7 +252,6 @@ fun shouldShowRequestPermissionRationale(context: Context, permission: String): 
     }
 }
 
-// Extension function to find the Activity from a Context
 fun Context.findActivity(): Activity? = when (this) {
     is Activity -> this
     is ContextWrapper -> baseContext.findActivity()

@@ -39,7 +39,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 @Composable
 fun HistoryScreen(navController: NavHostController) {
 
-    val historyViewModel: HistoryViewModel = hiltViewModel() // <-- GANTI DENGAN INI
+    val historyViewModel: HistoryViewModel = hiltViewModel()
 
 
     val uiState by historyViewModel.uiState.collectAsState()
@@ -101,9 +101,9 @@ fun HistoryScreen(navController: NavHostController) {
 @Composable
 fun HistoryCard(order: ServiceOrder) { // Menerima ServiceOrder
     val statusColor = when (order.status) {
-        "Completed" -> Color(0xFF388E3C) // Greenish
-        "Cancelled" -> Color.Red // Merah jika dibatalkan (jika ada status ini)
-        else -> Color.Gray // Status lain yang tidak terduga
+        "Completed" -> Color(0xFF388E3C)
+        "Cancelled" -> Color.Red
+        else -> Color.Gray
     }
 
     Card(

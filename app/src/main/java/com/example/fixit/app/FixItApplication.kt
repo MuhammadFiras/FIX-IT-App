@@ -27,31 +27,38 @@ import androidx.work.WorkManager
 import java.util.concurrent.TimeUnit
 import com.example.fixit.worker.SyncWorker
 import dagger.hilt.android.HiltAndroidApp
+import androidx.hilt.work.HiltWorkerFactory
+import androidx.work.Configuration
+import javax.inject.Inject
 
 @HiltAndroidApp
-class FixItApplication : Application() {
+class FixItApplication : Application(), Configuration.Provider { // <-- IMPLEMENTASIKAN Configuration.Provider
 
-    lateinit var database: AppDatabase
-        private set
-    lateinit var serviceOrderDao: ServiceOrderDao
-        private set
-    lateinit var firebaseServiceOrderDataSource: FirebaseServiceOrderDataSource
-        private set
-    lateinit var serviceOrderRepository: ServiceOrderRepository
-        private set
-    lateinit var serviceOrderUseCases: ServiceOrderUseCases
-        private set
-    lateinit var serviceOrderRepositoryImpl: ServiceOrderRepositoryImpl
+    // --- INJEKSI HiltWorkerFactory ---
+    @Inject // Hilt akan menyediakan ini
+    lateinit var workerFactory: HiltWorkerFactory // <-- TAMBAHKAN INI
 
-    companion object {
-        lateinit var instance: FixItApplication
-            private set
-    }
+    // --- HAPUS SEMUA VARIABEL LATEINIT UNTUK DEPENDENSI MANUAL ---
+    // lateinit var database: AppDatabase
+    // lateinit var serviceOrderDao: ServiceOrderDao
+    // lateinit var firebaseServiceOrderDataSource: FirebaseServiceOrderDataSource
+    // lateinit var serviceOrderRepository: ServiceOrderRepository
+    // lateinit var serviceOrderUseCases: ServiceOrderUseCases
+    // lateinit var serviceOrderRepositoryImpl: ServiceOrderRepositoryImpl
+
+    // --- HAPUS COMPANION OBJECT INSTANCE ---
+    // companion object {
+    //     lateinit var instance: FixItApplication
+    //         private set
+    // }
+
 
     override fun onCreate() {
         super.onCreate()
+        // --- HAPUS BARIS INSTANCE = THIS ---
+        // instance = this
 
-        // Inisialisasi Firebase
+        // Inisialisasi Firebase (tetap ada)
         if (FirebaseApp.getApps(this).isEmpty()) {
             FirebaseApp.initializeApp(this)
             Log.d("FixItApp", "FirebaseApp Initialized in FixItApplication")
@@ -59,16 +66,16 @@ class FixItApplication : Application() {
             Log.d("FixItApp", "FirebaseApp already initialized.")
         }
 
-        // Inisialisasi Firestore dengan pengaturan kustom untuk memastikan persistensi dan perilaku
+        // Inisialisasi Firestore dengan pengaturan kustom
         val firestoreInstance = FirebaseFirestore.getInstance()
         val settings = FirebaseFirestoreSettings.Builder()
             .setLocalCacheSettings(MemoryCacheSettings.newBuilder().build())
             .build()
         firestoreInstance.firestoreSettings = settings
-
         Log.d("FixItApp", "Firestore instance configured.")
 
-        // Inisialisasi Google Places API
+
+        // Inisialisasi Google Places API (tetap manual)
         val apiKey = applicationContext.packageManager.getApplicationInfo(
             applicationContext.packageName,
             PackageManager.GET_META_DATA
@@ -81,44 +88,36 @@ class FixItApplication : Application() {
             Log.e("FixItApp", "Google Places API Key not found or Places already initialized.")
         }
 
+        // Buat Notification Channel (tetap ada)
         createNotificationChannel()
 
-        database = Room.databaseBuilder(
-            applicationContext,
-            AppDatabase::class.java,
-            "fixit_database"
-        ).build()
+        // --- HAPUS SEMUA BLOK INISIALISASI DEPENDENSI MANUAL ---
+        // 1. Inisialisasi Room Database
+        // 2. Dapatkan DAO dari database
+        // 3. Inisialisasi Data Source Firebase
+        // 4. Inisialisasi Repository
+        // 5. Inisialisasi Use Cases
+        // --- AKHIR BLOK INISIALISASI MANUAL YANG DIHAPUS ---
 
-        serviceOrderDao = database.serviceOrderDao()
-
-        firebaseServiceOrderDataSource = FirebaseServiceOrderDataSource(firestoreInstance)
-
-        serviceOrderRepositoryImpl = ServiceOrderRepositoryImpl(firebaseServiceOrderDataSource, serviceOrderDao)
-        serviceOrderRepository = serviceOrderRepositoryImpl
-
-        serviceOrderUseCases = ServiceOrderUseCases(
-            createServiceOrder = CreateServiceOrderUseCase(serviceOrderRepository),
-            getServiceOrders = GetServiceOrdersUseCase(serviceOrderRepository),
-            getServiceOrderById = GetServiceOrderByIdUseCase(serviceOrderRepository),
-            updateServiceOrder = UpdateServiceOrderUseCase(serviceOrderRepository),
-            deleteServiceOrder = DeleteServiceOrderUseCase(serviceOrderRepository),
-            getActiveServiceOrders = GetActiveServiceOrdersUseCase(serviceOrderRepository),
-            insertAllOrdersToLocal = InsertAllOrdersToLocalUseCase(serviceOrderRepository),
-            getCompletedServiceOrders = GetCompletedServiceOrdersUseCase(serviceOrderRepository),
-            syncAllOrdersFromFirebaseToRoom = SyncAllOrdersFromFirebaseToRoomUseCase(serviceOrderRepository),
-            getServiceOrdersRealTime = GetServiceOrdersRealTimeUseCase(serviceOrderRepository)
-        )
-
-        schedulePeriodicSyncWork()
+        // Jadwalkan Background Task (WorkManager)
+        schedulePeriodicSyncWork() // Panggilan ini tetap ada
     }
 
     override fun onTerminate() {
         super.onTerminate()
-        serviceOrderRepositoryImpl.cancelScope()
-        if (this::firebaseServiceOrderDataSource.isInitialized) {
-            firebaseServiceOrderDataSource.cancelListenerScope()
-        }
+        // --- HAPUS PANGGILAN CANCEL SCOPE ---
+        // serviceOrderRepositoryImpl.cancelScope()
+        // if (this::firebaseServiceOrderDataSource.isInitialized) {
+        //     firebaseServiceOrderDataSource.cancelListenerScope()
+        // }
     }
+
+    // --- IMPLEMENTASI FUNGSI DARI Configuration.Provider ---
+    // Ini memberitahu WorkManager untuk menggunakan HiltWorkerFactory
+    override val workManagerConfiguration: Configuration
+        get() = Configuration.Builder()
+            .setWorkerFactory(workerFactory) // <-- Gunakan workerFactory yang di-inject
+            .build()
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

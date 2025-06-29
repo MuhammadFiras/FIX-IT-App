@@ -34,7 +34,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 @Composable
 fun OrderScreen(navController: NavHostController) {
 
-    val orderViewModel: OrderViewModel = hiltViewModel() // <-- GANTI DENGAN INI
+    val orderViewModel: OrderViewModel = hiltViewModel()
 
     val uiState by orderViewModel.uiState.collectAsState()
     val context = LocalContext.current
@@ -91,7 +91,7 @@ fun OrderScreen(navController: NavHostController) {
                                 orderViewModel.updateOrderStatus(updatedOrder, newStatus)
                             },
                             onDeleteOrder = { orderToDelete ->
-                                orderViewModel.showDeleteConfirmation(orderToDelete) // Panggil untuk konfirmasi
+                                orderViewModel.showDeleteConfirmation(orderToDelete)
                             }
                         )
                     }
@@ -110,7 +110,7 @@ fun OrderScreen(navController: NavHostController) {
             confirmButton = {
                 Button(
                     onClick = {
-                        val orderToDelete = uiState.orderToDelete // Dapatkan objek ServiceOrder
+                        val orderToDelete = uiState.orderToDelete
                         val orderIdToDelete = orderToDelete?.id
                         if (orderIdToDelete != null && orderIdToDelete.isNotEmpty()) {
                             orderViewModel.deleteOrder(orderIdToDelete)
@@ -119,7 +119,7 @@ fun OrderScreen(navController: NavHostController) {
                             Log.e("OrderScreen", "Cannot delete order: ID is empty or null for order: ${orderToDelete?.serviceCategory}")
                             Toast.makeText(context, "Gagal membatalkan: ID pesanan tidak ditemukan.", Toast.LENGTH_SHORT).show()
                         }
-                        orderViewModel.hideDeleteConfirmation() // Tutup dialog setelah aksi
+                        orderViewModel.hideDeleteConfirmation()
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) {
@@ -135,9 +135,9 @@ fun OrderCard(
     order: ServiceOrder,
     navController: NavHostController,
     onUpdateStatus: (ServiceOrder, String) -> Unit,
-    onDeleteOrder: (ServiceOrder) -> Unit // Callback baru untuk delete
+    onDeleteOrder: (ServiceOrder) -> Unit
 ) {
-    Log.d("OrderCardDebug", "Order ID: ${order.id}, Status received: ${order.status}") // <-- TAMBAHKAN INI
+    Log.d("OrderCardDebug", "Order ID: ${order.id}, Status received: ${order.status}")
 
     val statusColor = when (order.status) {
         "Pending" -> Color.Gray
@@ -195,7 +195,7 @@ fun OrderCard(
             Spacer(modifier = Modifier.height(8.dp))
             if (order.status == "Pending" || order.status == "Survey") {
                 Button(
-                    onClick = { onDeleteOrder(order) }, // Panggil callback delete
+                    onClick = { onDeleteOrder(order) },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.error
                     ),

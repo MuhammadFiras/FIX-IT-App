@@ -4,34 +4,40 @@ import android.content.Context
 import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.example.fixit.app.FixItApplication
+import androidx.hilt.work.HiltWorker
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedInject
+import com.example.fixit.domain.usecase.ServiceOrderUseCases
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import androidx.work.ListenableWorker
 
-class SyncWorker(appContext: Context, workerParams: WorkerParameters) :
-    CoroutineWorker(appContext, workerParams) {
 
-    override suspend fun doWork(): ListenableWorker.Result {
+@HiltWorker
+class SyncWorker @AssistedInject constructor(
+    @Assisted appContext: Context,
+    @Assisted workerParams: WorkerParameters,
+    private val serviceOrderUseCases: ServiceOrderUseCases
+) : CoroutineWorker(appContext, workerParams) {
+
+    override suspend fun doWork(): Result {
         Log.d("SyncWorker", "Starting periodic sync work...")
-
-        val application = applicationContext as FixItApplication
-        val serviceOrderUseCases = application.serviceOrderUseCases
 
         return withContext(Dispatchers.IO) {
             try {
-                val result = serviceOrderUseCases.syncAllOrdersFromFirebaseToRoom() // ← pastikan pakai ()
+                val kotlinResult = serviceOrderUseCases.syncAllOrdersFromFirebaseToRoom()
 
-                if (result.isSuccess) {
+                if (kotlinResult.isSuccess) {
                     Log.d("SyncWorker", "Periodic sync work succeeded.")
-                    ListenableWorker.Result.success()
+                    Result.success()
                 } else {
-                    Log.e("SyncWorker", "Periodic sync work failed: ${result.exceptionOrNull()}")
-                    ListenableWorker.Result.failure()
+                    val errorMessage = kotlinResult.exceptionOrNull()?.message ?: "Unknown error"
+                    Log.e("SyncWorker", "Periodic sync work failed: $errorMessage", kotlinResult.exceptionOrNull())
+                    Result.failure()
                 }
             } catch (e: Exception) {
                 Log.e("SyncWorker", "Exception during sync: ${e.message}", e)
-                ListenableWorker.Result.failure()
+                Result.failure()
             }
         }
     }

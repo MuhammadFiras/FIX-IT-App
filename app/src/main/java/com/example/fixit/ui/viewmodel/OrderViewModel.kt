@@ -42,29 +42,21 @@ class OrderViewModel @Inject constructor(
         startRealTimeCollection()
     }
 
-    // --- FUNGSI UNTUK KOLEKSI REAL-TIME DI FOREGROUND ---
     private fun startRealTimeCollection() {
-        // Hentikan job sebelumnya jika ada untuk menghindari duplikasi listener
         realTimeCollectionJob?.cancel()
         realTimeCollectionJob = viewModelScope.launch {
             Log.d("OrderViewModel", "Starting real-time collection from FirebaseDataSource.allServiceOrders.")
-            serviceOrderUseCases.getServiceOrdersRealTime() // <-- KUNCI: AMBIL FLOW REAL-TIME DARI DATA SOURCE
+            serviceOrderUseCases.getServiceOrdersRealTime()
                 .catch { e ->
                     Log.e("OrderViewModel", "Error in real-time collection Flow: ${e.message}", e)
-                    // Anda bisa update errorMessage di UI jika ingin
                 }
                 .collect { allRemoteOrders ->
-                    // Setiap kali ada emisi baru dari Firebase (real-time), update Room
                     Log.d("OrderViewModel", "Real-time collected ${allRemoteOrders.size} orders from Firebase. Updating Room via insertAllOrdersToLocal.")
-                    // Ini akan memicu ServiceOrderRepositoryImpl.insertAllOrdersToLocal()
-                    // yang akan melakukan deleteAll then insertAll
                     serviceOrderUseCases.insertAllOrdersToLocal(allRemoteOrders)
                 }
         }
     }
 
-
-    // Fungsi untuk memicu refresh manual (jika tombol refresh ada)
     fun triggerManualRefresh() {
         if (refreshJob?.isActive == true) {
             Log.d("OrderViewModel", "Manual refresh job already active, skipping.")
@@ -74,8 +66,6 @@ class OrderViewModel @Inject constructor(
             Log.d("OrderViewModel", "Starting manual refresh of all orders (triggered by user/init)...")
             _uiState.value = _uiState.value.copy(isLoading = true)
             try {
-                // Panggil sync penuh dari Repository
-                // Ini akan memicu ServiceOrderRepositoryImpl.syncAllOrdersFromFirebaseToRoom()
                 val result = serviceOrderUseCases.syncAllOrdersFromFirebaseToRoom()
                 result.onSuccess {
                     Log.d("OrderViewModel", "Manual refresh completed successfully. UI should update from Room's Flow.")
@@ -91,10 +81,7 @@ class OrderViewModel @Inject constructor(
         }
     }
 
-    // HAPUS FUNGSI startPeriodicPull() JIKA ANDA TIDAK MENGINGINKAN SYNC PERIODIK DI FOREGROUND
-    // private fun startPeriodicPull() { ... }
-
-    private fun fetchActiveOrders() { // Ini tetap mengobservasi Room
+    private fun fetchActiveOrders() {
         viewModelScope.launch {
             Log.d("OrderViewModel", "Fetching active orders from Room (fetchActiveOrders)...")
             serviceOrderUseCases.getActiveServiceOrders()
@@ -165,9 +152,8 @@ class OrderViewModel @Inject constructor(
 
     override fun onCleared() {
         super.onCleared()
-        // HAPUS periodicPullJob?.cancel() jika tidak ada startPeriodicPull
         refreshJob?.cancel()
-        realTimeCollectionJob?.cancel() // <-- BATALKAN JOB BARU INI
+        realTimeCollectionJob?.cancel()
         Log.d("OrderViewModel", "OrderViewModel cleared. All jobs cancelled.")
     }
 }
