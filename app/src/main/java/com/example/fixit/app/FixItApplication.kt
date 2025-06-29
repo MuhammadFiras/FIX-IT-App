@@ -31,9 +31,6 @@ import dagger.hilt.android.HiltAndroidApp
 @HiltAndroidApp
 class FixItApplication : Application() {
 
-    // --- KEMBALIKAN VARIABEL LATEINIT INI UNTUK AKSES MANUAL ---
-    // Hilt akan tetap menginjeksinya ke komponen yang di-Hilt,
-    // tetapi ini memungkinkan akses manual dari luar.
     lateinit var database: AppDatabase
         private set
     lateinit var serviceOrderDao: ServiceOrderDao
@@ -46,8 +43,6 @@ class FixItApplication : Application() {
         private set
     lateinit var serviceOrderRepositoryImpl: ServiceOrderRepositoryImpl
 
-
-    // --- KEMBALIKAN COMPANION OBJECT INI ---
     companion object {
         lateinit var instance: FixItApplication
             private set
@@ -67,7 +62,7 @@ class FixItApplication : Application() {
         // Inisialisasi Firestore dengan pengaturan kustom untuk memastikan persistensi dan perilaku
         val firestoreInstance = FirebaseFirestore.getInstance()
         val settings = FirebaseFirestoreSettings.Builder()
-            .setLocalCacheSettings(MemoryCacheSettings.newBuilder().build()) // <-- PERBAIKI DI SINI
+            .setLocalCacheSettings(MemoryCacheSettings.newBuilder().build())
             .build()
         firestoreInstance.firestoreSettings = settings
 
@@ -88,9 +83,6 @@ class FixItApplication : Application() {
 
         createNotificationChannel()
 
-        // --- KEMBALIKAN SEMUA BLOK INISIALISASI MANUAL INI ---
-        // Ini memastikan variabel lateinit di atas mendapatkan nilai
-        // dan bisa diakses oleh SyncWorker yang tidak di-Hilt
         database = Room.databaseBuilder(
             applicationContext,
             AppDatabase::class.java,
@@ -116,15 +108,12 @@ class FixItApplication : Application() {
             syncAllOrdersFromFirebaseToRoom = SyncAllOrdersFromFirebaseToRoomUseCase(serviceOrderRepository),
             getServiceOrdersRealTime = GetServiceOrdersRealTimeUseCase(serviceOrderRepository)
         )
-        // --- AKHIR BLOK INISIALISASI MANUAL YANG DIKEMBALIKAN ---
 
-        // Jadwalkan Background Task (WorkManager)
         schedulePeriodicSyncWork()
     }
 
     override fun onTerminate() {
         super.onTerminate()
-        // Ini akan tetap ada, karena instance kita sendiri yang mengelola scope
         serviceOrderRepositoryImpl.cancelScope()
         if (this::firebaseServiceOrderDataSource.isInitialized) {
             firebaseServiceOrderDataSource.cancelListenerScope()
@@ -132,45 +121,36 @@ class FixItApplication : Application() {
     }
 
     private fun createNotificationChannel() {
-        // Periksa versi Android. Notification Channel hanya diperlukan untuk Android 8.0 (Oreo) ke atas.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            // Ambil nama dan ID channel dari file Constants yang sudah kita buat
-            val name = Constants.NOTIFICATION_CHANNEL_NAME // "FixIT Order Updates"
-            val descriptionText = "Notifikasi untuk update status pesanan FixIT." // Deskripsi yang akan terlihat di pengaturan notifikasi
-            val importance = NotificationManager.IMPORTANCE_HIGH // Tingkat pentingnya notifikasi. HIGH berarti notifikasi akan muncul di atas (pop-up).
+            val name = Constants.NOTIFICATION_CHANNEL_NAME
+            val descriptionText = "Notifikasi untuk update status pesanan FixIT."
+            val importance = NotificationManager.IMPORTANCE_HIGH
 
-            // Buat objek NotificationChannel
             val channel = NotificationChannel(Constants.NOTIFICATION_CHANNEL_ID, name, importance).apply {
-                description = descriptionText // Set deskripsi channel
+                description = descriptionText
             }
 
-            // Dapatkan NotificationManager dari sistem
             val notificationManager: NotificationManager =
                 getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-            // Daftarkan channel ini dengan sistem Android
             notificationManager.createNotificationChannel(channel)
 
-            // Log untuk memastikan channel berhasil dibuat (akan terlihat di Logcat)
             Log.d("FixItApp", "Notification Channel created.")
         }
     }
 
     private fun schedulePeriodicSyncWork() {
-        // Definisikan request untuk PeriodicWork
         val syncWorkRequest = PeriodicWorkRequestBuilder<SyncWorker>(
-            15, TimeUnit.MINUTES // Ulangi setiap 15 menit (untuk demo/pengujian)
+            15, TimeUnit.MINUTES
         )
-            .build() // Bangun objek work request
+            .build()
 
-        // Dapatkan instance WorkManager dan antrekan tugas unik
         WorkManager.getInstance(this).enqueueUniquePeriodicWork(
-            "FixIT_Periodic_Sync_Work", // Nama unik untuk tugas ini. Pastikan ini unik di seluruh aplikasi Anda.
+            "FixIT_Periodic_Sync_Work",
             ExistingPeriodicWorkPolicy.KEEP,
             syncWorkRequest
         )
 
-        // Log untuk memastikan tugas berhasil dijadwalkan (akan terlihat di Logcat)
         Log.d("FixItApp", "Periodic sync work scheduled.")
     }
 }

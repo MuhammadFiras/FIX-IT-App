@@ -11,14 +11,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import android.util.Log
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.onCompletion
-// Hapus import delay, flow
-// import kotlinx.coroutines.delay
-// import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.collectLatest
-import dagger.hilt.android.lifecycle.HiltViewModel // <-- TAMBAHKAN INI
-import javax.inject.Inject // <-- TAMBAHKAN INI
+import javax.inject.Inject
 
 data class OrderUiState(
     val activeOrders: List<ServiceOrder> = emptyList(),
@@ -28,7 +25,7 @@ data class OrderUiState(
     val orderToDelete: ServiceOrder? = null
 )
 
-@HiltViewModel // <-- TAMBAHKAN ANOTASI INI
+@HiltViewModel
 class OrderViewModel @Inject constructor(
     private val serviceOrderUseCases: ServiceOrderUseCases,
     application: Application
@@ -37,28 +34,24 @@ class OrderViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(OrderUiState())
     val uiState: StateFlow<OrderUiState> = _uiState.asStateFlow()
 
-    private var refreshJob: Job? = null // Untuk manual refresh/one-time
-    // HAPUS periodicPullJob
-    // private var periodicPullJob: Job? = null
-    private var realTimeCollectionJob: Job? = null // JOB BARU UNTUK REAL-TIME FOREGROUND
+    private var refreshJob: Job? = null
+    private var realTimeCollectionJob: Job? = null
 
     init {
-        fetchActiveOrders() // Mengobservasi Room (untuk UI)
-        // HAPUS PANGGILAN startPeriodicPull()
-        // startPeriodicPull()
-        startRealTimeCollection() // <-- MULAI KOLEKSI REAL-TIME DI FOREGROUND
+        fetchActiveOrders()
+        startRealTimeCollection()
     }
 
-    // --- FUNGSI BARU UNTUK KOLEKSI REAL-TIME DI FOREGROUND ---
+    // --- FUNGSI UNTUK KOLEKSI REAL-TIME DI FOREGROUND ---
     private fun startRealTimeCollection() {
         // Hentikan job sebelumnya jika ada untuk menghindari duplikasi listener
         realTimeCollectionJob?.cancel()
         realTimeCollectionJob = viewModelScope.launch {
             Log.d("OrderViewModel", "Starting real-time collection from FirebaseDataSource.allServiceOrders.")
-            // MENGAMBIL FLOW REAL-TIME DARI FirebaseDataSource
-            serviceOrderUseCases.getServiceOrdersRealTime() // <-- KUNCI: AMBIL DARI REAL-TIME FLOW
+            serviceOrderUseCases.getServiceOrdersRealTime() // <-- KUNCI: AMBIL FLOW REAL-TIME DARI DATA SOURCE
                 .catch { e ->
                     Log.e("OrderViewModel", "Error in real-time collection Flow: ${e.message}", e)
+                    // Anda bisa update errorMessage di UI jika ingin
                 }
                 .collect { allRemoteOrders ->
                     // Setiap kali ada emisi baru dari Firebase (real-time), update Room
@@ -98,7 +91,7 @@ class OrderViewModel @Inject constructor(
         }
     }
 
-    // HAPUS FUNGSI startPeriodicPull() INI
+    // HAPUS FUNGSI startPeriodicPull() JIKA ANDA TIDAK MENGINGINKAN SYNC PERIODIK DI FOREGROUND
     // private fun startPeriodicPull() { ... }
 
     private fun fetchActiveOrders() { // Ini tetap mengobservasi Room
@@ -172,8 +165,9 @@ class OrderViewModel @Inject constructor(
 
     override fun onCleared() {
         super.onCleared()
+        // HAPUS periodicPullJob?.cancel() jika tidak ada startPeriodicPull
         refreshJob?.cancel()
-        realTimeCollectionJob?.cancel() // <-- BATALKAN JOB BARU
+        realTimeCollectionJob?.cancel() // <-- BATALKAN JOB BARU INI
         Log.d("OrderViewModel", "OrderViewModel cleared. All jobs cancelled.")
     }
 }
