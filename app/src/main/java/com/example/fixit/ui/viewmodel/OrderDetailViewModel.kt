@@ -18,8 +18,6 @@ import android.content.Context
 import android.content.ContextWrapper
 import androidx.lifecycle.AndroidViewModel
 import com.example.fixit.app.FixItApplication
-import com.google.firebase.Firebase
-import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.analytics.analytics
 import android.app.NotificationManager
 import android.util.Log
@@ -32,6 +30,10 @@ import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
+import com.google.firebase.analytics.FirebaseAnalytics // <-- PASTIKAN INI DIIMPOR
+import com.google.firebase.analytics.ktx.analytics // <-- PASTIKAN INI DIIMPOR
+import com.google.firebase.analytics.ktx.logEvent // <-- PASTIKAN INI DIIMPOR
+import com.google.firebase.ktx.Firebase // <-- PASTIKAN INI DIIMPOR
 
 // State untuk UI OrderDetailScreen
 data class OrderDetailUiState(
@@ -186,6 +188,15 @@ class OrderDetailViewModel @Inject constructor(
                 _events.send(OrderDetailEvent.NavigateToOrderSuccess)
                 resetForm()
                 showOrderCreatedNotification(createdOrder)
+                analytics.logEvent("order_created") { // <-- PASTIKAN INI ADA
+                    param("order_id", createdOrder.id)
+                    param("service_category", createdOrder.serviceCategory)
+                    param("customer_name", createdOrder.customerName) // <-- PARAMETER BARU
+                    param("location_text", createdOrder.locationText) // <-- PARAMETER BARU
+                    param("description_length", createdOrder.serviceDescription.length.toLong()) // <-- PARAMETER BARU
+                    param("timestamp_ms", createdOrder.timestamp) // <-- PARAMETER BARU (timestamp)
+                }
+                Log.d("FirebaseAnalytics", "Event 'order_created' logged with details for order ID: ${createdOrder.id}.")
             }.onFailure { e ->
                 _uiState.value = _uiState.value.copy(errorMessage = e.message ?: "Unknown error")
             }
@@ -199,8 +210,8 @@ class OrderDetailViewModel @Inject constructor(
         savedStateHandle["customerPhone"] = ""
         savedStateHandle["serviceDescription"] = ""
         savedStateHandle["locationText"] = ""
-        savedStateHandle["latitude"] = 0.0 // Reset juga
-        savedStateHandle["longitude"] = 0.0 // Reset juga
+        savedStateHandle["latitude"] = 0.0
+        savedStateHandle["longitude"] = 0.0
     }
 
     fun updateUiState(updater: (OrderDetailUiState) -> OrderDetailUiState) {

@@ -1,7 +1,6 @@
 package com.example.fixit.ui.screens.onboarding
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -16,13 +15,18 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.airbnb.lottie.compose.*
 import com.example.fixit.R
+import com.example.fixit.ui.components.LoadingScreen
 import com.example.fixit.ui.navigation.Screen
 import kotlinx.coroutines.delay
-import com.example.fixit.ui.components.LoadingScreen
+import com.google.firebase.analytics.FirebaseAnalytics // <-- TAMBAHKAN INI
+import com.google.firebase.analytics.ktx.analytics // <-- TAMBAHKAN INI
+import com.google.firebase.ktx.Firebase // <-- TAMBAHKAN INI
+import android.util.Log // Tambahkan ini untuk Log.d
 
 @Composable
 fun OnboardingScreen(navController: NavHostController) {
     var showLoading by rememberSaveable { mutableStateOf(false) }
+    val analytics: FirebaseAnalytics = Firebase.analytics // <-- DAPATKAN INSTANCE ANALYTICS DI SINI
 
     if (showLoading) {
         LoadingScreen()
@@ -31,6 +35,9 @@ fun OnboardingScreen(navController: NavHostController) {
             navController.navigate(Screen.Home.route) {
                 popUpTo(Screen.Onboarding.route) { inclusive = true }
             }
+            // --- SET USER PROPERTY SETELAH NAVIGASI KE HOME ---
+            analytics.setUserProperty("user_type", "Tenant") // Contoh: Set user_type ke "Tenant"
+            Log.d("FirebaseAnalytics", "User property 'user_type' set to 'Tenant' after onboarding.")
         }
     } else {
         OnboardingContent {

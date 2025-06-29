@@ -19,8 +19,6 @@ data class ServiceOrderUseCases(
     val getServiceOrdersRealTime: GetServiceOrdersRealTimeUseCase
 )
 
-// Definisi Use Case Individual
-
 class CreateServiceOrderUseCase @Inject constructor( private val repository: ServiceOrderRepository) {
     suspend operator fun invoke(order: ServiceOrder): Result<ServiceOrder> {
         if (order.customerName.isBlank() || order.customerPhone.isBlank() || order.serviceDescription.isBlank()) {
@@ -87,6 +85,6 @@ class SyncAllOrdersFromFirebaseToRoomUseCase @Inject constructor( private val re
 class GetServiceOrdersRealTimeUseCase @Inject constructor( private val repository: ServiceOrderRepository) {
     operator fun invoke(): Flow<List<ServiceOrder>> {
         // Repository akan mendelegasikan ke FirebaseServiceOrderDataSource.allServiceOrders
-        return repository.getServiceOrdersRealTime() // <-- Akan ditambahkan di Repository
+        return repository.getServiceOrdersRealTime()
     }
 }

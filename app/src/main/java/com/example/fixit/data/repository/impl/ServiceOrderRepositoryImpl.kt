@@ -123,8 +123,6 @@ class ServiceOrderRepositoryImpl @Inject constructor(
                 Log.e("Repository", "Error from local database flow in getServiceOrders: ${e.message}")
                 emit(emptyList())
             }
-        // --- HAPUS BLOK .onEach { ... } DI SINI ---
-        // Ini adalah sumber flicker. Kita akan mengoleksi langsung di ViewModel.
     }
 
     override fun getServiceOrderById(orderId: String): Flow<ServiceOrder> {
@@ -147,8 +145,6 @@ class ServiceOrderRepositoryImpl @Inject constructor(
                 Log.e("Repository", "Error from local database flow in getActiveOrders: ${e.message}")
                 emit(emptyList())
             }
-        // --- HAPUS BLOK .onEach { ... } DI SINI ---
-        // Ini adalah sumber flicker. Kita akan mengoleksi langsung di ViewModel.
     }
 
     override suspend fun insertAllOrdersToLocal(orders: List<ServiceOrder>): Result<Unit> {
@@ -178,7 +174,6 @@ class ServiceOrderRepositoryImpl @Inject constructor(
             }
     }
 
-    // Ini sudah ada di ServiceOrderUseCases dan ServiceOrderRepository
     override fun getServiceOrdersRealTime(): Flow<List<ServiceOrder>> {
         Log.d("Repository", "getServiceOrdersRealTime called. Delegating to FirebaseDataSource.allServiceOrders.")
         return remoteDataSource.allServiceOrders

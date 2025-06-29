@@ -1,4 +1,3 @@
-// app/src/main/java/com.example.fixit.di/AppModule.kt
 package com.example.fixit.di
 
 import android.content.Context
@@ -23,21 +22,21 @@ import dagger.Binds // <-- TAMBAHKAN INI
 @InstallIn(SingletonComponent::class)
 object AppModule {
 
-    // --- PROVIDE CONTEXT APLIKASI ---
+    // PROVIDE CONTEXT APLIKASI
     @Provides
     @Singleton
     fun provideApplicationContext(@ApplicationContext context: Context): Context {
         return context
     }
 
-    // --- PROVIDE INSTANCE FIREBASE FIRESTORE ---
+    // PROVIDE INSTANCE FIREBASE FIRESTORE
     @Provides
     @Singleton
     fun provideFirebaseFirestore(): FirebaseFirestore {
         return FirebaseFirestore.getInstance()
     }
 
-    // --- PROVIDE ROOM DATABASE ---
+    // PROVIDE ROOM DATABASE
     @Provides
     @Singleton
     fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase {
@@ -48,20 +47,18 @@ object AppModule {
         ).build()
     }
 
-    // --- PROVIDE ROOM DAO ---
+    // PROVIDE ROOM DAO
     @Provides
     @Singleton
     fun provideServiceOrderDao(database: AppDatabase): ServiceOrderDao {
         return database.serviceOrderDao()
     }
 
-    // --- PROVIDE SERVICE ORDER USE CASES ---
-    // Karena semua use case individu sudah di @Inject constructor,
-    // Hilt akan secara otomatis membangun ServiceOrderUseCases ini.
+    // PROVIDE SERVICE ORDER USE CASES
     @Provides
     @Singleton
     fun provideServiceOrderUseCases(
-        repository: ServiceOrderRepository // Hilt akan menyediakan ini
+        repository: ServiceOrderRepository
     ): ServiceOrderUseCases {
         return ServiceOrderUseCases(
             createServiceOrder = CreateServiceOrderUseCase(repository),
@@ -81,21 +78,14 @@ object AppModule {
 // Module terpisah untuk @Binds (khusus interface ke implementasi)
 @Module
 @InstallIn(SingletonComponent::class)
-abstract class RepositoryModule { // <-- Gunakan 'abstract class' untuk @Binds
+abstract class RepositoryModule {
 
     // --- BIND REPOSITORY INTERFACE KE IMPLEMENTASI ---
     // Ini memberitahu Hilt: "Jika ada yang meminta ServiceOrderRepository (interface),
     // berikan instance ServiceOrderRepositoryImpl."
-    @Binds // <-- Gunakan @Binds
+    @Binds
     @Singleton
     abstract fun bindServiceOrderRepository(
         serviceOrderRepositoryImpl: ServiceOrderRepositoryImpl // Hilt akan membangun ini
     ): ServiceOrderRepository
-
-    // --- BIND REMOTE DATA SOURCE INTERFACE KE IMPLEMENTASI (Jika Anda memiliki interface RemoteDataSource) ---
-    // @Binds
-    // @Singleton
-    // abstract fun bindRemoteDataSource(
-    //    firebaseServiceOrderDataSource: FirebaseServiceOrderDataSource
-    // ): RemoteDataSource
 }

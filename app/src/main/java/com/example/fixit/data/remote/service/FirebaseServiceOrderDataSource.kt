@@ -33,7 +33,7 @@ class FirebaseServiceOrderDataSource @Inject constructor(
 
     // SharedFlow yang akan memancarkan daftar order terbaru
     private val _allServiceOrders = MutableSharedFlow<List<ServiceOrder>>(
-        replay = 1, // Menyimpan 1 emisi terakhir
+        replay = 1,
         onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
     val allServiceOrders: SharedFlow<List<ServiceOrder>> = _allServiceOrders.asSharedFlow()
@@ -50,24 +50,19 @@ class FirebaseServiceOrderDataSource @Inject constructor(
                     }
 
                     if (snapshot != null) {
-                        // Ambil semua dokumen terbaru dari snapshot (ini harusnya selalu daftar lengkap yang terbaru)
                         val currentOrders = snapshot.documents.mapNotNull { document ->
                             document.toObject<ServiceOrder>()
                         }
 
-                        // --- LOG PERUBAHAN INDIVIDUAL ---
                         for (change in snapshot.documentChanges) {
                             Log.d("FirebaseDataSource", "DocumentChange Detected: Type=${change.type}, DocId=${change.document.id}, NewStatus=${change.document.getString("status")}")
                         }
-                        // --- END LOG PERUBAHAN INDIVIDUAL ---
 
                         Log.d("FirebaseDataSource", "Firestore Snapshot received (from init block): ${snapshot.documents.size} raw docs, ${currentOrders.size} converted orders. Attempting to emit to SharedFlow.")
-                        val result = _allServiceOrders.tryEmit(currentOrders) // Emit seluruh daftar yang terbaru
+                        val result = _allServiceOrders.tryEmit(currentOrders)
                         Log.d("FirebaseDataSource", "SharedFlow emit result: $result (true = success, false = failed).")
                     }
                 }
-            // Listener ini akan terus berjalan selama firestoreListenerScope aktif
-            // listenerRegistration.remove() akan dipanggil saat scope dibatalkan
         }
     }
 
@@ -84,14 +79,12 @@ class FirebaseServiceOrderDataSource @Inject constructor(
         }
     }
 
-    // Ini adalah fungsi yang paling kita fokuskan sekarang
     override fun getServiceOrders(): Flow<List<ServiceOrder>> {
-        Log.d("FirebaseDataSource", "getServiceOrders called. Returning SharedFlow.") // Gunakan allServiceOrders jika pakai SharedFlow
-        return allServiceOrders // Ganti dengan allServiceOrders jika pakai SharedFlow
+        Log.d("FirebaseDataSource", "getServiceOrders called. Returning SharedFlow.")
+        return allServiceOrders
     }
 
     override fun getServiceOrderById(orderId: String): Flow<ServiceOrder> = callbackFlow {
-        // ... (kode yang sama, tambahkan log DocumentChange juga jika mau)
         Log.d("FirebaseDataSource", "getServiceOrderById: callbackFlow started. Adding snapshot listener for ID: $orderId.")
         val listenerRegistration = serviceOrdersCollection.document(orderId)
             .addSnapshotListener { snapshot, e ->
@@ -101,14 +94,12 @@ class FirebaseServiceOrderDataSource @Inject constructor(
                     close(e)
                     return@addSnapshotListener
                 }
-                if (snapshot != null) { // Changed from (snapshot != null && snapshot.exists())
+                if (snapshot != null) {
                     if (snapshot.exists()) {
                         Log.d("FirebaseDataSource", "Single Doc Snapshot: Id=${snapshot.id}, Status=${snapshot.getString("status")}")
                     } else {
                         Log.d("FirebaseDataSource", "Single Doc Snapshot: Id=${snapshot.id}, Document DOES NOT EXIST.")
                     }
-                    // Tambahkan log DocumentChange di sini juga jika diperlukan
-                    // for (change in snapshot.documentChanges) { Log.d("FirebaseDataSource", "Single Doc Change: Type=${change.type}, DocId=${change.document.id}, Status=${change.document.getString("status")}") }
                     snapshot.toObject<ServiceOrder>()?.let { order ->
                         Log.d("FirebaseDataSource", "Fetched single order ${order.id} from Firestore. Attempting to send to Flow.")
                         launch {
@@ -150,7 +141,6 @@ class FirebaseServiceOrderDataSource @Inject constructor(
         }
     }
 
-    // Jika Anda menggunakan SharedFlow, ini fungsi cancel listener scopenya
     fun cancelListenerScope() {
         firestoreListenerScope.cancel()
         Log.d("FirebaseDataSource", "Firestore listener scope cancelled from DataSource.")

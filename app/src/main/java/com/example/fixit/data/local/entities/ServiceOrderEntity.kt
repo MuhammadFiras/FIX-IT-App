@@ -7,7 +7,7 @@ import com.example.fixit.domain.model.ServiceOrder
 @Entity(tableName = "service_orders")
 data class ServiceOrderEntity(
     @PrimaryKey
-    val id: String, // Ensure ID is non-null and correctly used as PK
+    val id: String,
     val customerName: String,
     val customerPhone: String,
     val serviceCategory: String,

@@ -3,10 +3,10 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     id("com.google.gms.google-services")
-    id("com.google.firebase.crashlytics") // For Crashlytics
+    id("com.google.firebase.crashlytics")
     id("kotlin-parcelize")
-    id("com.google.devtools.ksp") // For KSP
-    id("com.google.dagger.hilt.android") // <-- TAMBAHKAN BARIS INI
+    id("com.google.devtools.ksp")
+    id("com.google.dagger.hilt.android")
 }
 
 android {
@@ -42,7 +42,6 @@ android {
     buildFeatures {
         compose = true
     }
-    // KSP configuration for Room schema generation
     ksp {
         arg("room.schemaLocation", "$projectDir/schemas")
     }
@@ -70,20 +69,16 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
 
     // Firebase Platform (untuk memastikan semua versi Firebase kompatibel)
-    implementation(platform("com.google.firebase:firebase-bom:32.8.1"))
-    // Firebase Firestore (untuk database)
+    implementation(platform("com.google.firebase:firebase-bom:33.16.0"))
     implementation("com.google.firebase:firebase-firestore-ktx")
-    // Firebase Authentication (opsional)
     implementation("com.google.firebase:firebase-auth-ktx")
-    // Firebase Crashlytics
     implementation("com.google.firebase:firebase-crashlytics-ktx")
-    // Firebase Analytics (direkomendasikan bersama Crashlytics)
     implementation("com.google.firebase:firebase-analytics-ktx")
 
     // Google Maps
     implementation("com.google.android.gms:play-services-maps:18.2.0")
     implementation("com.google.maps.android:maps-compose:4.3.0")
-    // Google Places API (untuk pencarian lokasi dan autocomplete)
+    // Google Places API (autocomplete)
     implementation("com.google.android.libraries.places:places:3.4.0")
     // Google Location Services (PENTING UNTUK LocationRequest.Builder dan FusedLocationProviderClient)
     implementation("com.google.android.gms:play-services-location:21.0.1")
@@ -92,19 +87,13 @@ dependencies {
     implementation("androidx.room:room-runtime:2.6.1")
     ksp("androidx.room:room-compiler:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
-
     implementation("androidx.work:work-runtime-ktx:2.9.0")
 
-    // --- DEPENDENSI HILT ---
     // Library Hilt utama
-    implementation("com.google.dagger:hilt-android:2.51") // <-- TAMBAHKAN BARIS INI (VERSINYA SAMA DENGAN PLUGIN)
-    // Annotation processor untuk Hilt (penting untuk code generation)
-    ksp("com.google.dagger:hilt-compiler:2.51") // <-- TAMBAHKAN BARIS INI (Gunakan 'ksp' karena Anda sudah memakainya)
-
-    // Dependensi Hilt untuk integrasi dengan Jetpack ViewModel/Compose
-    implementation("androidx.hilt:hilt-navigation-compose:1.2.0") // <-- TAMBAHKAN BARIS INI (untuk Compose Navigation)
-    // Jika Anda menggunakan WorkManager dengan Hilt, Anda juga perlu ini:
-    implementation("androidx.hilt:hilt-work:1.2.0") // <-- TAMBAHKAN BARIS INI (jika ingin WorkManager diinjeksi Hilt)
-    ksp("androidx.hilt:hilt-compiler:1.2.0") // <-- TAMBAHKAN BARIS INI (annotation processor untuk androidx.hilt)
+    implementation("com.google.dagger:hilt-android:2.51")
+    ksp("com.google.dagger:hilt-compiler:2.51")
+    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
+    implementation("androidx.hilt:hilt-work:1.2.0")
+    ksp("androidx.hilt:hilt-compiler:1.2.0")
 
 }
