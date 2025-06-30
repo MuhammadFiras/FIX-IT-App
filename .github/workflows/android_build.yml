@@ -1,55 +1,42 @@
 # .github/workflows/android_build.yml
 
-# Nama dari workflow ini (akan terlihat di tab "Actions" GitHub Anda)
 name: Android CI Build
 
-# Pemicu: Kapan workflow ini akan berjalan
 on:
-  push: # Saat ada kode di-push
-    branches: # Tentukan branch mana yang akan memicu
-      - main # Contoh: ketika kode di-push ke branch 'main'
-      - develop # Contoh: atau ke branch 'develop'
-  pull_request: # Saat ada Pull Request
-    branches: # Tentukan branch mana yang akan memicu
-      - main # Contoh: ketika PR dibuat ke branch 'main'
-      - develop # Contoh: atau ke branch 'develop'
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
 
-# Jobs: Sekumpulan langkah yang akan dieksekusi
 jobs:
   build:
-    # Menentukan sistem operasi runner (virtual machine)
-    runs-on: ubuntu-latest # Rekomendasi: Ubuntu Linux terbaru dari GitHub
+    runs-on: ubuntu-latest
 
-    # Steps: Urutan aksi yang akan dilakukan dalam job 'build'
     steps:
-      - name: Checkout Code # Langkah 1: Mengambil kode dari repositori
-        uses: actions/checkout@v4 # Menggunakan GitHub Action resmi untuk checkout kode
+      - name: Checkout Code
+        uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Mengambil semua sejarah commit (opsional, untuk beberapa kasus)
+          fetch-depth: 0
 
-      - name: Set up JDK 11 # Langkah 2: Mengatur Java Development Kit (JDK)
-        uses: actions/setup-java@v4 # Menggunakan GitHub Action resmi untuk setup Java
+      - name: Set up JDK 17 # <-- UBAH NAMA LANGKAH INI
+        uses: actions/setup-java@v4
         with:
-          java-version: '11' # Versi Java yang digunakan proyek Android Anda
-          distribution: 'temurin' # Distribusi JDK
-          cache: 'gradle' # Mengaktifkan caching untuk dependensi Gradle (mempercepat build)
+          java-version: '17' # <-- UBAH DARI '11' MENJADI '17'
+          distribution: 'temurin'
+          cache: 'gradle'
 
-      - name: Grant execute permission for gradlew # Langkah 3: Memberikan izin eksekusi untuk gradlew
-        run: chmod +x gradlew # Mengubah izin file gradlew agar bisa dieksekusi
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
 
-      - name: Build Debug APK # Langkah 4: Menjalankan perintah Gradle untuk membangun debug APK
-        # Perintah ini akan membangun semua modul yang terhubung ke app
-        run: ./gradlew assembleDebug # Perintah Gradle untuk membangun debug APK
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug
 
-      - name: Upload Debug APK # Langkah 5: Mengunggah APK yang dibangun sebagai artefak
-        uses: actions/upload-artifact@v4 # Menggunakan GitHub Action resmi untuk upload artefak
+      - name: Upload Debug APK
+        uses: actions/upload-artifact@v4
         with:
-          name: app-debug-apk # Nama artefak (akan muncul di tab "Actions")
-          path: app/build/outputs/apk/debug/app-debug.apk # Jalur ke APK yang dibangun
-        # Jalur ini mengasumsikan APK Anda berada di app/build/outputs/apk/debug/
-
-    # --- LANGKAH OPSIONAL UNTUK MENJALANKAN UNIT TEST ---
-    # Jika Anda ingin menunjukkan unit test di CI (membutuhkan implementasi unit test di proyek)
-    # - name: Run Unit Tests
-    #   run: ./gradlew test
-    # ----------------------------------------------------
+          name: app-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
