@@ -1,0 +1,55 @@
+# .github/workflows/android_build.yml
+
+# Nama dari workflow ini (akan terlihat di tab "Actions" GitHub Anda)
+name: Android CI Build
+
+# Pemicu: Kapan workflow ini akan berjalan
+on:
+  push: # Saat ada kode di-push
+    branches: # Tentukan branch mana yang akan memicu
+      - main # Contoh: ketika kode di-push ke branch 'main'
+      - develop # Contoh: atau ke branch 'develop'
+  pull_request: # Saat ada Pull Request
+    branches: # Tentukan branch mana yang akan memicu
+      - main # Contoh: ketika PR dibuat ke branch 'main'
+      - develop # Contoh: atau ke branch 'develop'
+
+# Jobs: Sekumpulan langkah yang akan dieksekusi
+jobs:
+  build:
+    # Menentukan sistem operasi runner (virtual machine)
+    runs-on: ubuntu-latest # Rekomendasi: Ubuntu Linux terbaru dari GitHub
+
+    # Steps: Urutan aksi yang akan dilakukan dalam job 'build'
+    steps:
+      - name: Checkout Code # Langkah 1: Mengambil kode dari repositori
+        uses: actions/checkout@v4 # Menggunakan GitHub Action resmi untuk checkout kode
+        with:
+          fetch-depth: 0 # Mengambil semua sejarah commit (opsional, untuk beberapa kasus)
+
+      - name: Set up JDK 11 # Langkah 2: Mengatur Java Development Kit (JDK)
+        uses: actions/setup-java@v4 # Menggunakan GitHub Action resmi untuk setup Java
+        with:
+          java-version: '11' # Versi Java yang digunakan proyek Android Anda
+          distribution: 'temurin' # Distribusi JDK
+          cache: 'gradle' # Mengaktifkan caching untuk dependensi Gradle (mempercepat build)
+
+      - name: Grant execute permission for gradlew # Langkah 3: Memberikan izin eksekusi untuk gradlew
+        run: chmod +x gradlew # Mengubah izin file gradlew agar bisa dieksekusi
+
+      - name: Build Debug APK # Langkah 4: Menjalankan perintah Gradle untuk membangun debug APK
+        # Perintah ini akan membangun semua modul yang terhubung ke app
+        run: ./gradlew assembleDebug # Perintah Gradle untuk membangun debug APK
+
+      - name: Upload Debug APK # Langkah 5: Mengunggah APK yang dibangun sebagai artefak
+        uses: actions/upload-artifact@v4 # Menggunakan GitHub Action resmi untuk upload artefak
+        with:
+          name: app-debug-apk # Nama artefak (akan muncul di tab "Actions")
+          path: app/build/outputs/apk/debug/app-debug.apk # Jalur ke APK yang dibangun
+        # Jalur ini mengasumsikan APK Anda berada di app/build/outputs/apk/debug/
+
+    # --- LANGKAH OPSIONAL UNTUK MENJALANKAN UNIT TEST ---
+    # Jika Anda ingin menunjukkan unit test di CI (membutuhkan implementasi unit test di proyek)
+    # - name: Run Unit Tests
+    #   run: ./gradlew test
+    # ----------------------------------------------------
