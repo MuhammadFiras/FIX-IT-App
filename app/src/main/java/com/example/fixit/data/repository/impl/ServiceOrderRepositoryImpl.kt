@@ -60,7 +60,7 @@ class ServiceOrderRepositoryImpl @Inject constructor(
                     try {
                         localDataSource.insertOrder(createdOrder.toEntity())
                         Log.d("CacheCheck", "Order ${createdOrder.id} inserted into local Room DB after Firebase success.")
-                        // syncAllOrdersFromFirebaseToRoom() // <-- PANGGIL KEMBALI INI (tetap panggil ini)
+
                     } catch (e: Exception) {
                         Log.e("CacheCheck", "Failed to insert order into Room DB after Firebase success: ${e.message}")
                     }
